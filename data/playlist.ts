@@ -5,7 +5,7 @@
 // current without shipping a new build. If the playlist cannot be reached, the caller
 // falls back to the offline sample list in data/channels.ts.
 
-import api from './api';
+import api from '../services/api';
 import { Channel, SAMPLE_CHANNELS, groupKeyFor } from '../data/channels';
 
 // Several public iptv-org playlists are merged so the folders are full: everything
