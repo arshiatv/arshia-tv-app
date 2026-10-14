@@ -19,7 +19,7 @@ import PressableScale from '../components/PressableScale';
 import { Channel, GroupMeta, groupMeta } from '../data/channels';
 import { MOVIES, Movie } from '../data/movies';
 import { genreLabel, groupLabel, movieTitle } from '../data/labels';
-import { loadChannels } from '../utils/playlist';
+import { loadChannels } from '../data/playlist';
 import { useTranslation } from '../locales';
 
 const HERO_LIVE_COUNT = 14;
