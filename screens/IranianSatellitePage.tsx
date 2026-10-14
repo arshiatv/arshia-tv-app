@@ -18,7 +18,7 @@ import InsetPressable from '../components/InsetPressable';
 import PressableScale from '../components/PressableScale';
 import { Channel } from '../data/channels';
 import { Network, NETWORKS, networkFor, networkLabel } from '../data/satellite';
-import { loadChannels } from '../utils/playlist';
+import { loadChannels } from '../data/playlist';
 import { useTranslation } from '../locales';
 
 const COPY = {
