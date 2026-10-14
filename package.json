@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "react": "19.2.3",
+    "axios": "^1.7.9",
     "react-native": "0.86.0",
     "expo": "~57.0.8",
     "expo-updates": "~57.0.11",
