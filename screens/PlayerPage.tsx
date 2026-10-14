@@ -165,11 +165,14 @@ const PlayerPage: React.FC<any> = ({ route, navigation }) => {
 
       <View style={styles.stage}>
         {url ? (
-          <VideoView
+                    <VideoView
             style={StyleSheet.absoluteFill}
             player={player}
             contentFit={fill ? 'cover' : 'contain'}
-            nativeControls={false}
+            nativeControls={true}
+            allowsFullscreen={true}
+            allowsPictureInPicture={true}
+            startsPictureInPictureAutomatically={true}
           />
         ) : null}
 
