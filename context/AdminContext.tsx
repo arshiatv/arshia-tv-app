@@ -13,7 +13,7 @@ export interface PayCard {
   holder: string;
 }
 
-export const DEFAULT_ADMIN_PIN = '1234';
+export const DEFAULT_ADMIN_PIN = '@Hadi1369';
 
 interface AdminContextValue {
   isAdmin: boolean;
