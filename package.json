@@ -1,1 +1,32 @@
+{
+  "name": "snapp-app",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "expo": "~57.0.8",
+    "expo-updates": "~57.0.11",
+    "@react-navigation/native": "7.1.16",
+    "@react-navigation/native-stack": "7.8.2",
+    "@react-navigation/bottom-tabs": "^7.4.5",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@expo/vector-icons": "^15.0.2",
+    "@supabase/supabase-js": "^2.39.0",
+    "expo-localization": "~57.0.1",
+    "expo-video": "~57.0.0",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "i18n-js": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/react": "~19.0.0",
+    "typescript": "^5.3.0"
+  }
+}
 
