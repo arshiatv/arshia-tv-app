@@ -10,8 +10,8 @@ import { Lang, useTranslation } from '../locales';
 
 // The manager's contact details, printed on the support screen, in the privacy policy and
 // here, so a viewer never has to hunt for them.
-export const CONTACT_PHONE = '09139779707';
-export const CONTACT_EMAIL = 'ahmadrezajahn@gmail.com';
+export const CONTACT_PHONE = '0000000000';
+export const CONTACT_EMAIL = 'arshiyatv.hd@gmail.com';
 
 const COPY = {
   en: {
