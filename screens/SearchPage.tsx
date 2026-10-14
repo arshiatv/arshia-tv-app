@@ -18,7 +18,7 @@ import { Channel, groupMeta } from '../data/channels';
 import { MOVIES } from '../data/movies';
 import { SERIES, seriesTitle } from '../data/series';
 import { genreLabel, groupLabel, movieTitle } from '../data/labels';
-import { loadChannels } from '../utils/playlist';
+import { loadChannels } from '../data/playlist';
 import { useTranslation } from '../locales';
 
 const COPY = {
