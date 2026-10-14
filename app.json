@@ -3,13 +3,13 @@
     "name": "Arshia TV",
     "slug": "hadi",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A0E17",
     "runtimeVersion": "snapp-sdk57-v1",
     "updates": {
-      "url": "https://u.expo.dev/{EAS_PROJECT_ID}"
+      "url": "https://expo.dev"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -32,7 +32,14 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": [],
+    "plugins": [
+      [
+        "expo-video",
+        {
+          "supportsPictureInPicture": true
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "acf108fd-0f96-4bfc-b801-e7df391771c5"
