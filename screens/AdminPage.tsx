@@ -114,6 +114,31 @@ const COPY = {
   },
 };
 
+// --- بخش اتصال آنلاین به فایربیس ---
+const FIREBASE_URL = "https://firebaseio.com";
+
+const getOnlineAdminData = async () => {
+  try {
+    const response = await fetch(FIREBASE_URL);
+    const data = await response.json();
+    return data || { pin: '1234', bank: '', number: '', holder: '' };
+  } catch (error) {
+    return { pin: '1234', bank: '', number: '', holder: '' };
+  }
+};
+
+const saveOnlineAdminData = async (newData: any) => {
+  try {
+    await fetch(FIREBASE_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newData),
+    });
+  } catch (error) {
+    console.log("Error saving to Firebase:", error);
+  }
+};
+// ---------------------------------
 /**
  * The manager area.
  *
@@ -145,25 +170,39 @@ const AdminPage: React.FC<any> = ({ navigation }) => {
   const [newPin, setNewPin] = useState('');
   const [card, setCard] = useState(payCard);
 
-  const submitPin = () => {
-    if (unlock(pinInput)) {
+  const submitPin = async () => {
+  const onlineData = await getOnlineAdminData();
+    if (pinInput === onlineData.pin) {
+      unlock(pinInput); // ورود به حالت مدیریت
       setPinInput('');
       setPinError('');
+      // لود کردن مشخصات کارت از روی دیتابیس آنلاین برای نمایش در اینپوت‌ها
+      setCard({
+        bank: onlineData.bank || '',
+        number: onlineData.number || '',
+        holder: onlineData.holder || '',
+      });
       return;
     }
     setPinError(copy.wrongPin);
   };
 
-  const saveCard = () => {
+  const saveCard = async () => {
+  const onlineData = await getOnlineAdminData();
+  const updatedData = { ...onlineData, ...card };
+    await saveOnlineAdminData(updatedData);
     updatePayCard(card);
     Alert.alert(copy.savedTitle, copy.savedText);
   };
 
-  const savePin = () => {
+  const savePin = async () => {
     if (newPin.trim().length < 4) {
       Alert.alert(copy.tooShortTitle, copy.tooShortText);
       return;
     }
+  const onlineData = await getOnlineAdminData();
+  const updatedData = { ...onlineData, pin: newPin };
+    await saveOnlineAdminData(updatedData);
     changePin(newPin);
     setNewPin('');
     Alert.alert(copy.pinChangedTitle, copy.pinChangedText);
