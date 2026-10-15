@@ -1,9 +1,8 @@
+import type { Ad } from '../services/ads';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fbGet, fbSet, fbUpdate } from '../services/firebase';
 
 export const DEFAULT_ADMIN_PIN = '1234';
-const ADMIN_PATH = 'admin';
-const PAYCARD_PATH = 'payCard';
+const FIREBASE_URL = "https://firebaseio.com";
 
 interface AdminContextType {
   isAdmin: boolean;
@@ -17,6 +16,12 @@ interface AdminContextType {
   restoreChannels: () => void;
   payCard: { bank: string; number: string; holder: string };
   updatePayCard: (card: { bank: string; number: string; holder: string }) => void;
+  // Ads management
+  ads: Ad[];
+  loadAds: () => Promise<void>;
+  createAd: (ad: Omit<Ad, 'id' | 'createdAt'>) => Promise<string | null>;
+  updateAd: (id: string, ad: Partial<Ad>) => Promise<boolean>;
+  deleteAd: (id: string) => Promise<boolean>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -27,33 +32,26 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [hiddenGroups, setHiddenGroups] = useState<string[]>([]);
   const [removedChannelIds, setRemovedChannelIds] = useState<string[]>([]);
   const [payCard, setPayCard] = useState({ bank: '', number: '', holder: '' });
+  const [ads, setAds] = useState<Ad[]>([]);
 
+  // ۱. خواندن آنلاین اطلاعات از فایربیس به محض باز شدن برنامه
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const data = await fbGet(ADMIN_PATH);
-        if (!mounted) return;
-        if (data && data.pin) setPin(data.pin);
-      } catch (err) {
-        // keep defaults on error
-        console.log('Admin load error', err);
-      }
-    })();
+    fetch(FIREBASE_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (data.pin) setPin(data.pin);
+          setPayCard({
+            bank: data.bank || '',
+            number: data.number || '',
+            holder: data.holder || '',
+          });
+        }
+      })
+      .catch(err => console.log("Error loading Firebase data:", err));
 
-    (async () => {
-      try {
-        const card = await fbGet(PAYCARD_PATH);
-        if (!mounted) return;
-        if (card) setPayCard({ bank: card.bank || '', number: card.number || '', holder: card.holder || '' });
-      } catch (err) {
-        console.log('PayCard load error', err);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
+    // load ads initially
+    loadAds().catch((e) => console.log('Failed loading ads:', e));
   }, []);
 
   const unlock = (enteredPin: string) => {
@@ -66,12 +64,20 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const lock = () => setIsAdmin(false);
 
+  // ۲. ارسال آنلاین رمز جدید به فایربیس هنگام تغییر رمز
   const changePin = async (newPin: string) => {
     try {
       setPin(newPin);
-      await fbUpdate(ADMIN_PATH, { pin: newPin });
+      const response = await fetch(FIREBASE_URL);
+      const currentData = await response.json() || {};
+      
+      await fetch(FIREBASE_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...currentData, pin: newPin }),
+      });
     } catch (error) {
-      console.log('Error updating PIN', error);
+      console.log("Error updating PIN to Firebase:", error);
     }
   };
 
@@ -83,34 +89,116 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const restoreChannels = () => setRemovedChannelIds([]);
 
+  // ۳. ارسال آنلاین مشخصات کارت به فایربیس هنگام زدن دکمه ذخیره اطلاعات کارت
   const updatePayCard = async (card: { bank: string; number: string; holder: string }) => {
     try {
       setPayCard(card);
-      await fbSet(PAYCARD_PATH, card);
+      const response = await fetch(FIREBASE_URL);
+      const currentData = await response.json() || {};
+      
+      await fetch(FIREBASE_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...currentData, ...card }),
+      });
     } catch (error) {
-      console.log('Error updating pay card', error);
+      console.log("Error updating Card to Firebase:", error);
     }
   };
 
-  const value = {
-    isAdmin,
-    pin,
-    unlock,
-    lock,
-    changePin,
-    hiddenGroups,
-    toggleGroup,
-    removedChannelIds,
-    restoreChannels,
-    payCard,
-    updatePayCard,
+  // --- Ads management through simple Realtime DB REST API ---
+  const loadAds = async () => {
+    try {
+      const res = await fetch(`${FIREBASE_URL}/ads.json`);
+      const data = await res.json();
+      if (!data) {
+        setAds([]);
+        return;
+      }
+      const list: Ad[] = Object.keys(data).map((key) => ({ id: key, ...data[key] }));
+      // sort by createdAt desc
+      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setAds(list);
+    } catch (error) {
+      console.log('Error loading ads from Firebase:', error);
+    }
   };
 
-  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
+  const createAd = async (ad: Omit<Ad, 'id' | 'createdAt'>) => {
+    try {
+      const body = { ...ad, active: !!ad.active, createdAt: Date.now() };
+      const res = await fetch(`${FIREBASE_URL}/ads.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      const id = result.name;
+      if (id) {
+        await loadAds();
+        return id;
+      }
+      return null;
+    } catch (error) {
+      console.log('Error creating ad:', error);
+      return null;
+    }
+  };
+
+  const updateAd = async (id: string, ad: Partial<Ad>) => {
+    try {
+      await fetch(`${FIREBASE_URL}/ads/${id}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ad),
+      });
+      await loadAds();
+      return true;
+    } catch (error) {
+      console.log('Error updating ad:', error);
+      return false;
+    }
+  };
+
+  const deleteAd = async (id: string) => {
+    try {
+      await fetch(`${FIREBASE_URL}/ads/${id}.json`, { method: 'DELETE' });
+      await loadAds();
+      return true;
+    } catch (error) {
+      console.log('Error deleting ad:', error);
+      return false;
+    }
+  };
+
+  return (
+    <AdminContext.Provider
+      value={{
+        isAdmin,
+        pin,
+        unlock,
+        lock,
+        changePin,
+        hiddenGroups,
+        toggleGroup,
+        removedChannelIds,
+        restoreChannels,
+        payCard,
+        updatePayCard,
+        ads,
+        loadAds,
+        createAd,
+        updateAd,
+        deleteAd,
+      }}
+    >
+      {children}
+    </AdminContext.Provider>
+  );
 };
 
-export function useAdmin(): AdminContextType {
-  const value = useContext(AdminContext);
-  if (!value) throw new Error('useAdmin must be used inside AdminProvider');
-  return value;
-}
+export const useAdmin = () => {
+  const context = useContext(AdminContext);
+  if (!context) throw new Error('useAdmin must be used within an AdminProvider');
+  return context;
+};
