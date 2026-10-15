@@ -85,7 +85,6 @@ const PlayerPage: React.FC<any> = ({ route, navigation }) => {
   const [status, setStatus] = useState<PlaybackStatus>('idle');
   const [isPlaying, setIsPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [fill, setFill] = useState(false);
 
   const player = useVideoPlayer(url ? url : null, (instance) => {
     instance.loop = false;
@@ -166,10 +165,10 @@ const PlayerPage: React.FC<any> = ({ route, navigation }) => {
       <View style={styles.stage}>
         {url ? (
         <VideoView
-          style={StyleSheet.absoluteFill}
+            style={StyleSheet.absoluteFill}
             player={player}
-              contentFit={fill ? 'cover' : 'contain'}
-               nativeControls={true}
+            contentFit="contain"
+            nativeControls={true}
             allowsFullscreen={true}
             allowsPictureInPicture={true}
             startsPictureInPictureAutomatically={true}
@@ -235,19 +234,6 @@ const PlayerPage: React.FC<any> = ({ route, navigation }) => {
               color={AppTheme.colors.text}
             />
             <Text style={styles.controlText}>{muted ? copy.muted : copy.sound}</Text>
-          </PressableScale>
-
-          <PressableScale
-            onPress={() => setFill((prev) => !prev)}
-            style={styles.controlButton}
-            accessibilityLabel={fill ? copy.fit : copy.fill}
-          >
-            <Ionicons
-              name={fill ? 'contract-outline' : 'expand-outline'}
-              size={18}
-              color={AppTheme.colors.text}
-            />
-            <Text style={styles.controlText}>{fill ? copy.fit : copy.fill}</Text>
           </PressableScale>
 
           <View style={styles.controlSpacer} />
