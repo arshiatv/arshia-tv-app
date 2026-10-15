@@ -1,138 +1,192 @@
-import React from 'react';
-import { StatusBar } from 'react-native';
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Theme } from './theme/AppTheme';
+import React, { useEffect, useState } from "react";
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, Linking, BackHandler, Platform } from "react-native";
+import database from "@react-native-firebase/database";
+import DeviceInfo from "react-native-device-info";
+import semver from "semver";
 
-import HomePage from './screens/HomePage';
-import LiveChannelsPage from './screens/LiveChannelsPage';
-import MoviesPage from './screens/MoviesPage';
-import MorePage from './screens/MorePage';
-import PlayerPage from './screens/PlayerPage';
+/**
+ * Force Update at app root (strict):
+ * - Reads /current_version and /force_update_url from Realtime DB
+ * - If localVersion < current_version OR remote can't be read (strict mode),
+ *   block the app with a non-dismissible full-screen update screen.
+ *
+ * Place this component at the root of your app (before NavigationContainer)
+ */
 
-import IranianSatellitePage from './screens/IranianSatellitePage';
-import SearchPage from './screens/SearchPage';
-import SeriesPage from './screens/SeriesPage';
-import FavoritesPage from './screens/FavoritesPage';
-import SubscriptionPage from './screens/SubscriptionPage';
-import InstallPage from './screens/InstallPage';
-import PrivacyPage from './screens/PrivacyPage';
-import AdminPage from './screens/AdminPage';
+const ForceUpdateScreen: React.FC<{ url: string; message?: string }> = ({ url, message }) => {
+  // Block Android back
+  useEffect(() => {
+    const onBack = () => true;
+    BackHandler.addEventListener("hardwareBackPress", onBack);
+    return () => BackHandler.removeEventListener("hardwareBackPress", onBack);
+  }, []);
 
-import { AdminProvider } from './context/AdminContext';
-import { FavoritesProvider } from './context/FavoritesContext';
-import { LanguageProvider, useTranslation } from './locales';
-
-const Tab = createBottomTabNavigator();
-const RootStack = createNativeStackNavigator();
-const MoreStack = createNativeStackNavigator();
-
-// Spread the built-in theme so React Navigation keeps its `fonts` object.
-const navigationTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    primary: Theme.colors.primary,
-    background: Theme.colors.background,
-    card: Theme.colors.surface,
-    text: Theme.colors.text,
-    border: Theme.colors.border,
-    notification: Theme.colors.primary,
-  },
-};
-
-const TAB_ICONS: Record<string, { active: string; inactive: string }> = {
-  Home: { active: 'home', inactive: 'home-outline' },
-  Live: { active: 'tv', inactive: 'tv-outline' },
-  Movies: { active: 'film', inactive: 'film-outline' },
-  More: { active: 'grid', inactive: 'grid-outline' },
-};
-
-const TAB_LABELS = {
-  en: { Home: 'Home', Live: 'Live TV', Movies: 'Movies', More: 'More' },
-  fa: { Home: 'خانه', Live: 'تلویزیون زنده', Movies: 'فیلم‌ها', More: 'بیشتر' },
-};
-
-function MoreNavigator() {
-  return (
-    <MoreStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <MoreStack.Screen name="MoreMenu" component={MorePage} />
-      <MoreStack.Screen name="IranianSatellite" component={IranianSatellitePage} />
-      <MoreStack.Screen name="Search" component={SearchPage} />
-      <MoreStack.Screen name="Series" component={SeriesPage} />
-      <MoreStack.Screen name="Favorites" component={FavoritesPage} />
-      <MoreStack.Screen name="Subscription" component={SubscriptionPage} />
-      <MoreStack.Screen name="InstallApp" component={InstallPage} />
-      <MoreStack.Screen name="Privacy" component={PrivacyPage} />
-      <MoreStack.Screen name="Admin" component={AdminPage} />
-    </MoreStack.Navigator>
-  );
-}
-
-function Tabs() {
-  const { lang } = useTranslation();
-  const labels = TAB_LABELS[lang];
-
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: Theme.colors.selection.active,
-        tabBarInactiveTintColor: Theme.colors.selection.inactive,
-        tabBarStyle: {
-          backgroundColor: Theme.colors.surface,
-          borderTopColor: Theme.colors.border,
-          borderTopWidth: 1,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10.5,
-          fontWeight: Theme.typography.fontWeight.semibold,
-        },
-        tabBarIcon: ({ color, focused }) => {
-          const icons = TAB_ICONS[route.name] || TAB_ICONS.Home;
-          return (
-            <Ionicons
-              name={(focused ? icons.active : icons.inactive) as any}
-              size={focused ? 23 : 21}
-              color={color}
-            />
-          );
-        },
-      })}
-    >
-      <Tab.Screen name="Home" component={HomePage} options={{ title: labels.Home }} />
-      <Tab.Screen name="Live" component={LiveChannelsPage} options={{ title: labels.Live }} />
-      <Tab.Screen name="Movies" component={MoviesPage} options={{ title: labels.Movies }} />
-      <Tab.Screen name="More" component={MoreNavigator} options={{ title: labels.More }} />
-    </Tab.Navigator>
-  );
-}
-
-export default function App() {
-  return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" />
-      <LanguageProvider>
-        <AdminProvider>
-          <FavoritesProvider>
-            <NavigationContainer theme={navigationTheme}>
-              <RootStack.Navigator screenOptions={{ headerShown: false }}>
-                <RootStack.Screen name="Tabs" component={Tabs} />
-                <RootStack.Screen
-                  name="Player"
-                  component={PlayerPage}
-                  options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }}
-                />
-              </RootStack.Navigator>
-            </NavigationContainer>
-          </FavoritesProvider>
-        </AdminProvider>
-      </LanguageProvider>
-    </SafeAreaProvider>
-  );
+  const openUrl = async () => {
+    try {
+      if (url) {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+          return;
+        }
       }
-        
+      // fallback
+      const fallback = Platform.OS === "android" ? "https://play.google.com/store" : "https://apps.apple.com/";
+      await Linking.openURL(fallback);
+    } catch (e) {
+      console.warn("Open URL failed", e);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.forceContainer}>
+      <View style={styles.card}>
+        <Text style={styles.title}>از کار افتادن نسخه قبلی</Text>
+        <Text style={styles.message}>
+          {message ??
+            "نسخهٔ فعلی برنامه دیگر پشتیبانی نمی‌شود. برای ادامه باید برنامه را فوراً به‌روز کنید."}
+        </Text>
+        <TouchableOpacity style={styles.button} onPress={openUrl} accessibilityLabel="Update Now">
+          <Text style={styles.buttonText}>Update Now</Text>
+        </TouchableOpacity>
+        <Text style={styles.hint}>برای ادامه باید به اینترنت متصل شده و برنامه را آپدیت کنید.</Text>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+export default function AppRoot({ children }: { children: React.ReactNode }) {
+  const [forceUpdateRequired, setForceUpdateRequired] = useState<boolean>(false);
+  const [updateUrl, setUpdateUrl] = useState<string | null>(null);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const localVersion = DeviceInfo.getVersion(); // ex: "1.2.3"
+    const currentVersionRef = database().ref("/current_version");
+    const urlRef = database().ref("/force_update_url");
+
+    // Strict behavior: if we cannot determine remote required version (error or no value),
+    // we will consider force update required (to prevent bypass).
+    const handleErrorStrict = (err?: any) => {
+      console.warn("Force update check error:", err);
+      if (!mounted) return;
+      setForceUpdateRequired(true);
+      setChecked(true);
+    };
+
+    const checkOnce = async () => {
+      try {
+        const snap = await currentVersionRef.once("value");
+        if (!mounted) return;
+        if (!snap.exists()) {
+          // no version defined => strict block (change if you want permissive)
+          handleErrorStrict();
+          return;
+        }
+        const requiredVersion = snap.val();
+        // read url
+        const urlSnap = await urlRef.once("value");
+        const urlVal = urlSnap.exists() ? urlSnap.val() : null;
+        setUpdateUrl(urlVal);
+
+        // normalize values using semver.coerce
+        const lv = semver.coerce(localVersion)?.version ?? localVersion;
+        const rv = semver.coerce(requiredVersion)?.version ?? requiredVersion;
+
+        if (semver.valid(lv) && semver.valid(rv)) {
+          if (semver.lt(lv, rv)) {
+            setForceUpdateRequired(true);
+          } else {
+            setForceUpdateRequired(false);
+          }
+          setChecked(true);
+        } else {
+          // If semver couldn't parse, fall back to string compare logic
+          if (lv < rv) setForceUpdateRequired(true);
+          else setForceUpdateRequired(false);
+          setChecked(true);
+        }
+      } catch (e) {
+        handleErrorStrict(e);
+      }
+    };
+
+    // subscribe to changes (keeps real-time)
+    const onValue = (snap: any) => {
+      try {
+        if (!mounted) return;
+        const requiredVersion = snap.exists() ? snap.val() : null;
+        if (!requiredVersion) {
+          setForceUpdateRequired(true);
+          setChecked(true);
+          return;
+        }
+        const lv = semver.coerce(localVersion)?.version ?? localVersion;
+        const rv = semver.coerce(requiredVersion)?.version ?? requiredVersion;
+        if (semver.valid(lv) && semver.valid(rv)) {
+          setForceUpdateRequired(semver.lt(lv, rv));
+        } else {
+          setForceUpdateRequired(lv < rv);
+        }
+        setChecked(true);
+      } catch (e) {
+        console.warn(e);
+        setForceUpdateRequired(true);
+        setChecked(true);
+      }
+    };
+
+    checkOnce();
+    currentVersionRef.on("value", onValue);
+    const urlListener = (snap: any) => {
+      if (!mounted) return;
+      if (snap.exists()) setUpdateUrl(snap.val());
+    };
+    urlRef.on("value", urlListener);
+
+    return () => {
+      mounted = false;
+      currentVersionRef.off("value", onValue);
+      urlRef.off("value", urlListener);
+    };
+  }, []);
+
+  // while checking, you can show splash or block - we choose to block until resolved
+  if (!checked || forceUpdateRequired) {
+    return <ForceUpdateScreen url={updateUrl ?? ""} />;
+  }
+
+  return <>{children}</>;
+}
+
+const styles = StyleSheet.create({
+  forceContainer: {
+    flex: 1,
+    backgroundColor: "#0b0b0b",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  card: {
+    width: "92%",
+    backgroundColor: "#fff",
+    padding: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  title: { fontSize: 20, fontWeight: "700", marginBottom: 8 },
+  message: { fontSize: 16, textAlign: "center", marginBottom: 20, color: "#333" },
+  button: {
+    backgroundColor: "#E53935",
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  hint: { fontSize: 12, color: "#666", marginTop: 8, textAlign: "center" },
+});
