@@ -9,7 +9,10 @@
     "backgroundColor": "#0A0E17",
     "runtimeVersion": "snapp-sdk57-v1",
     "updates": {
-      "url": "https://expo.dev"
+      "url": "https://expo.dev",
+      "enabled": true,
+      "checkAutomatically": "ON_START",
+      "fallbackToCacheTimeout": 30000
     },
     "assetBundlePatterns": [
       "**/*"
@@ -41,6 +44,7 @@
       ]
     ],
     "extra": {
+      "firebaseUrl": "https://firebaseio.com",
       "eas": {
         "projectId": "acf108fd-0f96-4bfc-b801-e7df391771c5"
       }
