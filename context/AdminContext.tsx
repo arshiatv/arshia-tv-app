@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fbGet, fbSet, fbUpdate } from '../services/firebase';
 
-const FIREBASE_URL = "https://firebaseio.com";
+export const DEFAULT_ADMIN_PIN = '1234';
+const ADMIN_PATH = 'admin';
+const PAYCARD_PATH = 'payCard';
 
 interface AdminContextType {
   isAdmin: boolean;
@@ -20,30 +23,41 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [pin, setPin] = useState('');
+  const [pin, setPin] = useState(DEFAULT_ADMIN_PIN);
   const [hiddenGroups, setHiddenGroups] = useState<string[]>([]);
   const [removedChannelIds, setRemovedChannelIds] = useState<string[]>([]);
   const [payCard, setPayCard] = useState({ bank: '', number: '', holder: '' });
 
-  // Read admin data from remote on app start.
   useEffect(() => {
-    fetch(FIREBASE_URL)
-      .then(res => res.json())
-      .then(data => {
-        if (data) {
-          if (data.pin) setPin(data.pin);
-          setPayCard({
-            bank: data.bank || '',
-            number: data.number || '',
-            holder: data.holder || '',
-          });
-        }
-      })
-      .catch(err => console.log("Error loading Firebase data:", err));
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await fbGet(ADMIN_PATH);
+        if (!mounted) return;
+        if (data && data.pin) setPin(data.pin);
+      } catch (err) {
+        // keep defaults on error
+        console.log('Admin load error', err);
+      }
+    })();
+
+    (async () => {
+      try {
+        const card = await fbGet(PAYCARD_PATH);
+        if (!mounted) return;
+        if (card) setPayCard({ bank: card.bank || '', number: card.number || '', holder: card.holder || '' });
+      } catch (err) {
+        console.log('PayCard load error', err);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const unlock = (enteredPin: string) => {
-    if (enteredPin === pin && pin) {
+    if (enteredPin === pin) {
       setIsAdmin(true);
       return true;
     }
@@ -55,16 +69,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const changePin = async (newPin: string) => {
     try {
       setPin(newPin);
-      const response = await fetch(FIREBASE_URL);
-      const currentData = (await response.json()) || {};
-
-      await fetch(FIREBASE_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...currentData, pin: newPin }),
-      });
+      await fbUpdate(ADMIN_PATH, { pin: newPin });
     } catch (error) {
-      console.log("Error updating PIN to Firebase:", error);
+      console.log('Error updating PIN', error);
     }
   };
 
@@ -79,15 +86,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updatePayCard = async (card: { bank: string; number: string; holder: string }) => {
     try {
       setPayCard(card);
-      const response = await fetch(FIREBASE_URL);
-      const currentData = (await response.json()) || {};
-      await fetch(FIREBASE_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...currentData, ...card }),
-      });
+      await fbSet(PAYCARD_PATH, card);
     } catch (error) {
-      console.log("Error updating pay card to Firebase:", error);
+      console.log('Error updating pay card', error);
     }
   };
 
