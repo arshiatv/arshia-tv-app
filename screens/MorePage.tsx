@@ -137,67 +137,71 @@ const MorePage: React.FC<any> = ({ navigation }) => {
   const { lang, setLang } = useTranslation();
   const copy = COPY[lang];
 
-  const entries = useMemo<MenuEntry[]>(
-    () => [
-      {
-        screen: 'IranianSatellite',
-        title: copy.satellite,
-        description: copy.satelliteText,
-        icon: 'globe-outline',
-        color: '#E63946',
-      },
-      {
-        screen: 'Search',
-        title: copy.search,
-        description: copy.searchText,
-        icon: 'search-outline',
-        color: '#3B82F6',
-      },
-      {
-        screen: 'Series',
-        title: copy.series,
-        description: copy.seriesText,
-        icon: 'albums-outline',
-        color: '#14B8A6',
-      },
-      {
-        screen: 'Favorites',
-        title: copy.favorites,
-        description: copy.favoritesText,
-        icon: 'heart-outline',
-        color: '#EC4899',
-      },
-      {
-        screen: 'Subscription',
-        title: copy.support,
-        description: copy.supportText,
-        icon: 'heart-circle-outline',
-        color: '#22C55E',
-      },
-      {
-        screen: 'InstallApp',
-        title: copy.install,
-        description: copy.installText,
-        icon: 'phone-portrait-outline',
-        color: '#8B5CF6',
-      },
-      {
-        screen: 'Privacy',
-        title: copy.privacy,
-        description: copy.privacyText,
-        icon: 'lock-closed-outline',
-        color: '#0EA5E9',
-      },
-      {
+  const baseEntries: MenuEntry[] = useMemo(() => [
+    {
+      screen: 'IranianSatellite',
+      title: copy.satellite,
+      description: copy.satelliteText,
+      icon: 'globe-outline',
+      color: '#E63946',
+    },
+    {
+      screen: 'Search',
+      title: copy.search,
+      description: copy.searchText,
+      icon: 'search-outline',
+      color: '#3B82F6',
+    },
+    {
+      screen: 'Series',
+      title: copy.series,
+      description: copy.seriesText,
+      icon: 'albums-outline',
+      color: '#14B8A6',
+    },
+    {
+      screen: 'Favorites',
+      title: copy.favorites,
+      description: copy.favoritesText,
+      icon: 'heart-outline',
+      color: '#EC4899',
+    },
+    {
+      screen: 'Subscription',
+      title: copy.support,
+      description: copy.supportText,
+      icon: 'heart-circle-outline',
+      color: '#22C55E',
+    },
+    {
+      screen: 'InstallApp',
+      title: copy.install,
+      description: copy.installText,
+      icon: 'phone-portrait-outline',
+      color: '#8B5CF6',
+    },
+    {
+      screen: 'Privacy',
+      title: copy.privacy,
+      description: copy.privacyText,
+      icon: 'lock-closed-outline',
+      color: '#0EA5E9',
+    },
+  ], [copy]);
+
+  const entries = useMemo(() => {
+    const list = [...baseEntries];
+    if (isAdmin) {
+      list.push({
         screen: 'Admin',
         title: copy.admin,
         description: copy.adminText,
         icon: 'shield-checkmark-outline',
         color: '#F59E0B',
-      },
-    ],
-    [copy]
-  );
+      });
+    }
+    return list;
+  }, [baseEntries, copy, isAdmin]);
 
   const languages: { key: Lang; label: string }[] = [
     { key: 'fa', label: copy.persian },
@@ -479,4 +483,3 @@ const styles = StyleSheet.create({
 });
 
 export default MorePage;
-    
