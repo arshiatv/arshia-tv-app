@@ -20,8 +20,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.snapp.arshiatv",
+      "buildNumber": "1",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIDeviceFamily": [1, 2, 3]
       }
     },
     "android": {
@@ -29,7 +31,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0E17"
       },
-      "package": "com.snapp.arshiatv"
+      "package": "com.snapp.arshiatv",
+      "isTV": true,
+      "intentFilters": [
+        {
+          "action": "android.intent.action.MAIN",
+          "categories": [
+            "android.intent.category.LAUNCHER",
+            "android.intent.category.LEANBACK_LAUNCHER"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
