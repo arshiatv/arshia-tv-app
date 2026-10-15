@@ -1,113 +1,98 @@
-// Who is running Arshia TV.
-//
-// This build has no database, so the manager is recognised for the current session:
-// unlock with the PIN and the management tools appear (hide a folder, remove a channel,
-// set the card-to-card details). Everything the manager changes lives in memory and is
-// shared with every screen through this context.
-
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-
-export interface PayCard {
-  bank: string;
-  number: string;
-  holder: string;
-}
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export const DEFAULT_ADMIN_PIN = '1234';
+const FIREBASE_URL = "https://firebaseio.com";
 
-interface AdminContextValue {
+interface AdminContextType {
   isAdmin: boolean;
   pin: string;
-  unlock: (candidate: string) => boolean;
+  unlock: (enteredPin: string) => boolean;
   lock: () => void;
-  changePin: (next: string) => void;
+  changePin: (newPin: string) => void;
   hiddenGroups: string[];
-  toggleGroup: (key: string) => void;
+  toggleGroup: (groupKey: string) => void;
   removedChannelIds: string[];
-  removeChannel: (id: string) => void;
   restoreChannels: () => void;
-  payCard: PayCard;
-  updatePayCard: (next: Partial<PayCard>) => void;
+  payCard: { bank: string; number: string; holder: string };
+  updatePayCard: (card: { bank: string; number: string; holder: string }) => void;
 }
 
-const AdminContext = createContext<AdminContextValue | null>(null);
+const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [pin, setPin] = useState(DEFAULT_ADMIN_PIN);
   const [hiddenGroups, setHiddenGroups] = useState<string[]>([]);
   const [removedChannelIds, setRemovedChannelIds] = useState<string[]>([]);
-  const [payCard, setPayCard] = useState<PayCard>({ bank: '', number: '', holder: '' });
+  const [payCard, setPayCard] = useState({ bank: '', number: '', holder: '' });
 
-  const unlock = useCallback(
-    (candidate: string) => {
-      const ok = candidate.trim() === pin;
-      if (ok) setIsAdmin(true);
-      return ok;
-    },
-    [pin]
-  );
-
-  const lock = useCallback(() => setIsAdmin(false), []);
-
-  const changePin = useCallback((next: string) => {
-    const clean = next.trim();
-    if (clean.length >= 4) setPin(clean);
+  // لود کردن اطلاعات از فایربیس به محض باز شدن برنامه
+  useEffect(() => {
+    fetch(FIREBASE_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (data.pin) setPin(data.pin);
+          setPayCard({
+            bank: data.bank || '',
+            number: data.number || '',
+            holder: data.holder || '',
+          });
+        }
+      })
+      .catch(err => console.log("Error loading Firebase data:", err));
   }, []);
 
-  const toggleGroup = useCallback((key: string) => {
-    setHiddenGroups((prev) =>
-      prev.includes(key) ? prev.filter((item) => item !== key) : prev.concat(key)
+  const unlock = (enteredPin: string) => {
+    if (enteredPin === pin) {
+      setIsAdmin(true);
+      return true;
+    }
+    return false;
+  };
+
+  const lock = () => setIsAdmin(false);
+
+  const changePin = (newPin: string) => {
+    setPin(newPin);
+  };
+
+  const toggleGroup = (groupKey: string) => {
+    setHiddenGroups(prev =>
+      prev.includes(groupKey) ? prev.filter(k => k !== groupKey) : [...prev, groupKey]
     );
-  }, []);
+  };
 
-  const removeChannel = useCallback((id: string) => {
-    setRemovedChannelIds((prev) => (prev.includes(id) ? prev : prev.concat(id)));
-  }, []);
+  const restoreChannels = () => setRemovedChannelIds([]);
 
-  const restoreChannels = useCallback(() => setRemovedChannelIds([]), []);
+  const updatePayCard = (card: { bank: string; number: string; holder: string }) => {
+    setPayCard(card);
+  };
 
-  const updatePayCard = useCallback((next: Partial<PayCard>) => {
-    setPayCard((prev) => ({ ...prev, ...next }));
-  }, []);
-
-  const value = useMemo(
-    () => ({
-      isAdmin,
-      pin,
-      unlock,
-      lock,
-      changePin,
-      hiddenGroups,
-      toggleGroup,
-      removedChannelIds,
-      removeChannel,
-      restoreChannels,
-      payCard,
-      updatePayCard,
-    }),
-    [
-      isAdmin,
-      pin,
-      unlock,
-      lock,
-      changePin,
-      hiddenGroups,
-      toggleGroup,
-      removedChannelIds,
-      removeChannel,
-      restoreChannels,
-      payCard,
-      updatePayCard,
-    ]
+  return (
+    <AdminContext.Provider
+      value={{
+        isAdmin,
+        pin,
+        unlock,
+        lock,
+        changePin,
+        hiddenGroups,
+        toggleGroup,
+        removedChannelIds,
+        restoreChannels,
+        payCard,
+        updatePayCard,
+      }}
+    >
+      {children}
+    </AdminContext.Provider>
   );
-
-  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 };
 
-export function useAdmin(): AdminContextValue {
-  const value = useContext(AdminContext);
-  if (!value) throw new Error('useAdmin must be used inside AdminProvider');
-  return value;
-  }
-                                    
+export const useAdmin = () => {
+  const context = useContext(AdminContext);
+  if (!context) throw new Error('useAdmin must be used within an AdminProvider');
+  return context;
+};
+        
