@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export const DEFAULT_ADMIN_PIN = '1234';
 const FIREBASE_URL = "https://firebaseio.com";
 
 interface AdminContextType {
@@ -21,12 +20,12 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [pin, setPin] = useState(DEFAULT_ADMIN_PIN);
+  const [pin, setPin] = useState('');
   const [hiddenGroups, setHiddenGroups] = useState<string[]>([]);
   const [removedChannelIds, setRemovedChannelIds] = useState<string[]>([]);
   const [payCard, setPayCard] = useState({ bank: '', number: '', holder: '' });
 
-  // ۱. خواندن آنلاین اطلاعات از فایربیس به محض باز شدن برنامه
+  // Read admin data from remote on app start.
   useEffect(() => {
     fetch(FIREBASE_URL)
       .then(res => res.json())
@@ -44,7 +43,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const unlock = (enteredPin: string) => {
-    if (enteredPin === pin) {
+    if (enteredPin === pin && pin) {
       setIsAdmin(true);
       return true;
     }
@@ -53,13 +52,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const lock = () => setIsAdmin(false);
 
-  // ۲. ارسال آنلاین رمز جدید به فایربیس هنگام تغییر رمز
   const changePin = async (newPin: string) => {
     try {
       setPin(newPin);
       const response = await fetch(FIREBASE_URL);
-      const currentData = await response.json() || {};
-      
+      const currentData = (await response.json()) || {};
+
       await fetch(FIREBASE_URL, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -78,47 +76,40 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const restoreChannels = () => setRemovedChannelIds([]);
 
-  // ۳. ارسال آنلاین مشخصات کارت به فایربیس هنگام زدن دکمه ذخیره اطلاعات کارت
   const updatePayCard = async (card: { bank: string; number: string; holder: string }) => {
     try {
       setPayCard(card);
       const response = await fetch(FIREBASE_URL);
-      const currentData = await response.json() || {};
-      
+      const currentData = (await response.json()) || {};
       await fetch(FIREBASE_URL, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...currentData, ...card }),
       });
     } catch (error) {
-      console.log("Error updating Card to Firebase:", error);
+      console.log("Error updating pay card to Firebase:", error);
     }
   };
 
-  return (
-    <AdminContext.Provider
-      value={{
-        isAdmin,
-        pin,
-        unlock,
-        lock,
-        changePin,
-        hiddenGroups,
-        toggleGroup,
-        removedChannelIds,
-        restoreChannels,
-        payCard,
-        updatePayCard,
-      }}
-    >
-      {children}
-    </AdminContext.Provider>
-  );
+  const value = {
+    isAdmin,
+    pin,
+    unlock,
+    lock,
+    changePin,
+    hiddenGroups,
+    toggleGroup,
+    removedChannelIds,
+    restoreChannels,
+    payCard,
+    updatePayCard,
+  };
+
+  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 };
 
-export const useAdmin = () => {
-  const context = useContext(AdminContext);
-  if (!context) throw new Error('useAdmin must be used within an AdminProvider');
-  return context;
-};
-    
+export function useAdmin(): AdminContextType {
+  const value = useContext(AdminContext);
+  if (!value) throw new Error('useAdmin must be used inside AdminProvider');
+  return value;
+}
