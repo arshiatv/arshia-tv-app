@@ -89,6 +89,7 @@ interface SampleSeed {
 }
 
 const SAMPLE_SEED: SampleSeed[] = [
+  // IRIB and domestic
   { name: 'IRIB TV1', group: 'General' },
   { name: 'IRIB TV2', group: 'General' },
   { name: 'IRIB TV3', group: 'General' },
@@ -100,21 +101,89 @@ const SAMPLE_SEED: SampleSeed[] = [
   { name: 'IRIB Mostanad', group: 'Culture' },
   { name: 'IRIB IRINN', group: 'News' },
   { name: 'IRIB World', group: 'News' },
-  { name: 'Press TV', group: 'News' },
-  { name: 'Al-Alam', group: 'News' },
   { name: 'IRIB Varzesh', group: 'Sports' },
-  { name: 'IRIB Pooya', group: 'Sports' },
+  { name: 'IRIB Pooya', group: 'Kids' },
   { name: 'IRIB Nahal', group: 'Kids' },
   { name: 'IRIB Quran', group: 'Religious' },
-  { name: 'iFilm', group: 'Movies' },
   { name: 'IRIB Namayesh', group: 'Movies' },
   { name: 'IRIB Tamasha', group: 'Series' },
-  { name: 'Manoto', group: 'Entertainment' },
-  { name: 'GEM TV', group: 'Entertainment' },
+
+  // Persian satellite / international Persian-language channels
   { name: 'BBC Persian', group: 'News' },
   { name: 'VOA Persian', group: 'News' },
   { name: 'Iran International', group: 'News' },
+  { name: 'Manoto', group: 'Entertainment' },
+  { name: 'GEM TV', group: 'Entertainment' },
   { name: 'PMC', group: 'Music' },
+  { name: 'Farsi1', group: 'Entertainment' },
+  { name: 'MBC Persia', group: 'Entertainment' },
+  { name: 'Tapesh TV', group: 'Music' },
+  { name: 'Persia TV', group: 'Entertainment' },
+  { name: 'Pars TV', group: 'Entertainment' },
+  { name: 'Simaye Azadi', group: 'News' },
+  { name: 'Zagros TV', group: 'General' },
+
+  // Sports & combat / wrestling
+  { name: 'WWE Network', group: 'Sports' },
+  { name: 'AEW', group: 'Sports' },
+  { name: 'UFC Fight Pass', group: 'Sports' },
+  { name: 'Boxing Channel', group: 'Sports' },
+  { name: 'Combat Sports HD', group: 'Sports' },
+  { name: 'BeIN Sports 1', group: 'Sports' },
+  { name: 'BeIN Sports 2', group: 'Sports' },
+  { name: 'ESPN', group: 'Sports' },
+  { name: 'Sky Sports Main Event', group: 'Sports' },
+  { name: 'Fox Sports', group: 'Sports' },
+  { name: 'NBC Sports', group: 'Sports' },
+  { name: 'DAZN', group: 'Sports' },
+  { name: 'Eurosport', group: 'Sports' },
+  { name: 'Red Bull TV', group: 'Sports' },
+  { name: 'MotorTrend', group: 'Sports' },
+
+  // General sports / regional sports
+  { name: 'IRIB Varzesh 2', group: 'Sports' },
+  { name: 'Asian Sports', group: 'Sports' },
+  { name: 'Local Football Feed', group: 'Sports' },
+
+  // Wildlife / Nature / Documentary
+  { name: 'National Geographic', group: 'Culture' },
+  { name: 'Nat Geo Wild', group: 'Culture' },
+  { name: 'Discovery Channel', group: 'Culture' },
+  { name: 'BBC Earth', group: 'Culture' },
+  { name: 'Animal Planet', group: 'Culture' },
+  { name: 'Nature & Wildlife', group: 'Culture' },
+  { name: 'Wildlife Live', group: 'Culture' },
+
+  // Educational (Cooking, Science)
+  { name: 'Food Network', group: 'Lifestyle' },
+  { name: 'Tasty', group: 'Lifestyle' },
+  { name: 'BBC Good Food', group: 'Lifestyle' },
+  { name: 'Cooking Channel', group: 'Lifestyle' },
+  { name: 'Science Channel', group: 'Culture' },
+  { name: 'Discovery Science', group: 'Culture' },
+  { name: 'CuriosityStream', group: 'Culture' },
+
+  // Music & Entertainment
+  { name: 'MTV', group: 'Music' },
+  { name: 'VH1', group: 'Music' },
+  { name: 'Kanal Music', group: 'Music' },
+  { name: 'Classic Hits', group: 'Music' },
+  { name: 'Entertainment HD', group: 'Entertainment' },
+
+  // Family / Kids
+  { name: 'Cartoon Network', group: 'Kids' },
+  { name: "Nickelodeon", group: 'Kids' },
+  { name: 'Disney Channel', group: 'Kids' },
+  { name: 'Disney Junior', group: 'Kids' },
+
+  // Lifestyle / Travel / Home
+  { name: 'Travel Channel', group: 'Lifestyle' },
+  { name: 'Home & Garden', group: 'Lifestyle' },
+
+  // Other / specialty
+  { name: 'Weather Channel', group: 'Other' },
+  { name: 'Traffic Live', group: 'Other' },
+  { name: 'Local Community TV', group: 'Other' },
 ];
 
 export const SAMPLE_CHANNELS: Channel[] = SAMPLE_SEED.map((seed, index) => ({
@@ -125,4 +194,3 @@ export const SAMPLE_CHANNELS: Channel[] = SAMPLE_SEED.map((seed, index) => ({
   url: '',
   quality: '',
 }));
-    
