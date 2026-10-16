@@ -56,7 +56,10 @@
       ]
     ],
     "extra": {
-      "firebaseUrl": "https://firebaseio.com"
+      "firebaseUrl": "https://firebaseio.com",
+      "eas": {
+        "projectId": "acf108fd-0f96-4bfc-b801-e7df391771c5"
+      }
     }
   }
 }
