@@ -20,7 +20,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const core = require('@actions/core');
+            // don't require('@actions/core') here — github-script injects core and redeclaring causes SyntaxError
             const body = fs.existsSync('PR_NOTES.md') ? fs.readFileSync('PR_NOTES.md','utf8') : 'Automatic PR for feature branch';
             const { data } = await github.rest.pulls.create({
               owner: context.repo.owner,
@@ -30,4 +30,5 @@ jobs:
               base: 'main',
               body,
             });
-            core.info(`PR created: ${data.html_url}`);
+            // use console.log instead of redeclaring core
+            console.log(`PR created: ${data.html_url}`);
