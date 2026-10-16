@@ -34,7 +34,7 @@ jobs:
 
       - name: Install functions dependencies
         run: |
-          # install function deps so setAdminClaim and deploy work
+          # install function dependencies so setAdminClaim and deploy work correctly
           npm --prefix functions ci
 
       - name: (Optional) Set admin custom claim
