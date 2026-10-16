@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,6 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,8 +34,7 @@ const COPY = {
     liveRightNow: 'live right now',
     rating: 'rating',
     watchNow: 'Watch now',
-    offline:
-      'The live playlist could not be reached, so the built-in channel list is shown. Pull down to try again.',
+    offline: 'The live playlist could not be reached...',
     liveNow: 'Live now',
     freeChannels: 'free channels',
     movies: 'Movies',
@@ -43,14 +42,10 @@ const COPY = {
     browse: 'Browse by category',
     shelves: 'Collapsible channel shelves',
     loading: 'Loading live channels…',
-    footer:
-      'Arshia TV indexes free-to-air Iranian and international channels. Every broadcast and film carries the Arshia TV mark.',
-    channelHintNoUrl:
-      'This entry comes from the built-in channel list, so no stream address is attached to it. Open Live TV and pull down to load the live playlist.',
-    channelHintFailed:
-      'The stream did not respond. Channels come and go during the day, so try another one from Live TV.',
-    movieHint:
-      'This title is in the Arshia catalogue, so no source is attached to it yet. Attach an M3U8 address to the film and it plays here.',
+    footer: 'Arshia TV indexes free-to-air channels.',
+    channelHintNoUrl: 'Open Live TV and pull down to load.',
+    channelHintFailed: 'The stream did not respond.',
+    movieHint: 'This title is in the Arshia catalogue.',
     live: 'Live',
     min: 'min',
   },
@@ -62,8 +57,7 @@ const COPY = {
     liveRightNow: 'در حال پخش زنده',
     rating: 'امتیاز',
     watchNow: 'تماشا کنید',
-    offline:
-      'فهرست پخش زنده در دسترس نبود، پس فهرست داخلی برنامه نمایش داده می‌شود. برای تلاش دوباره صفحه را پایین بکشید.',
+    offline: 'فهرست پخش زنده در دسترس نبود...',
     liveNow: 'همین حالا زنده',
     freeChannels: 'شبکه‌ی رایگان',
     movies: 'فیلم‌ها',
@@ -71,14 +65,10 @@ const COPY = {
     browse: 'مرور بر اساس دسته',
     shelves: 'قفسه‌های شبکه، باز و بسته‌شدنی',
     loading: 'در حال بارگذاری شبکه‌های زنده…',
-    footer:
-      'آرشیا تی‌وی شبکه‌های رایگان ایرانی و خارجی را فهرست می‌کند. هر پخش و هر فیلم نشان آرشیا تی‌وی را همراه دارد.',
-    channelHintNoUrl:
-      'این مورد از فهرست داخلی شبکه‌ها می‌آید و نشانی پخشی به آن وصل نیست. تلویزیون زنده را باز کنید و برای بارگذاری فهرست، صفحه را پایین بکشید.',
-    channelHintFailed:
-      'پخش پاسخ نداد. شبکه‌ها در طول روز خاموش و روشن می‌شوند، پس یکی دیگر را از تلویزیون زنده امتحان کنید.',
-    movieHint:
-      'این عنوان در فهرست آرشیا است و هنوز منبعی به آن وصل نشده. کافی است نشانی M3U8 به فیلم اضافه شود تا همین‌جا پخش شود.',
+    footer: 'آرشیا تی‌وی شبکه‌های رایگان را فهرست می‌کند.',
+    channelHintNoUrl: 'تلویزیون زنده را باز کنید و صفحه را پایین بکشید.',
+    channelHintFailed: 'پخش پاسخ نداد. شبکه دیگری را امتحان کنید.',
+    movieHint: 'نشانی M3U8 به فیلم اضافه شود تا پخش شود.',
     live: 'زنده',
     min: 'دقیقه',
   },
@@ -109,7 +99,7 @@ const LiveCard: React.FC<LiveCardProps> = ({ channel, index, onPress }) => {
     <Animated.View
       style={{
         opacity: enter,
-        transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) }],
+        transform: [{ translateY: enter.interpolate({ inputRange:, outputRange: [22, 0] }) }],
       }}
     >
       <PressableScale onPress={onPress} style={styles.liveCard} accessibilityLabel={channel.name}>
@@ -132,7 +122,6 @@ const LiveCard: React.FC<LiveCardProps> = ({ channel, index, onPress }) => {
     </Animated.View>
   );
 };
-
 interface MovieCardProps {
   movie: Movie;
   index: number;
@@ -157,7 +146,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onPress }) => {
     <Animated.View
       style={{
         opacity: enter,
-        transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) }],
+        transform: [{ translateY: enter.interpolate({ inputRange:, outputRange: [22, 0] }) }],
       }}
     >
       <PressableScale
@@ -230,6 +219,9 @@ const HomePage: React.FC<any> = ({ navigation }) => {
   const [closed, setClosed] = useState<Record<string, boolean>>({});
   const enter = useRef(new Animated.Value(0)).current;
 
+  // شمارنده کلیک مخفی لوگو
+  const [logoClicks, setLogoClicks] = useState(0);
+
   const load = useCallback(async (force: boolean) => {
     const result = await loadChannels(force);
     setChannels(result.channels);
@@ -252,10 +244,21 @@ const HomePage: React.FC<any> = ({ navigation }) => {
     setClosed((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const handleLogoPress = () => {
+    const nextClicks = logoClicks + 1;
+    if (nextClicks >= 7) {
+      setLogoClicks(0);
+      Alert.alert("پنل مخفی", "در حال انتقال به بخش مدیریت...");
+      navigation.navigate('AdminUnlock');
+    } else {
+      setLogoClicks(nextClicks);
+    }
+  };
+
   const rise = (start: number, distance: number = 26) => ({
     opacity: enter.interpolate({
       inputRange: [start, Math.min(start + 0.45, 1)],
-      outputRange: [0, 1],
+      outputRange:,
       extrapolate: 'clamp',
     }),
     transform: [
@@ -296,22 +299,18 @@ const HomePage: React.FC<any> = ({ navigation }) => {
     });
   };
 
-  const groups = useMemo(
-    () => {
-      const present: GroupMeta[] = [];
-      const seen: Record<string, boolean> = {};
-      channels.forEach((channel) => {
-        if (!seen[channel.group]) {
-          seen[channel.group] = true;
-          present.push(groupMeta(channel.group));
-        }
-      });
-      return present;
-    },
-    [channels]
-  );
-
-  return (
+  const groups = useMemo(() => {
+    const present: GroupMeta[] = [];
+    const seen: Record<string, boolean> = {};
+    channels.forEach((channel) => {
+      if (!seen[channel.group]) {
+        seen[channel.group] = true;
+        present.push(groupMeta(channel.group));
+      }
+    });
+    return present;
+  }, [channels]);
+    return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -330,9 +329,9 @@ const HomePage: React.FC<any> = ({ navigation }) => {
       >
         <View style={styles.header}>
           <View style={styles.brand}>
-            <View style={styles.brandMark}>
+            <PressableScale onPress={handleLogoPress} style={styles.brandMark}>
               <Ionicons name="play" size={16} color={AppTheme.colors.white} />
-            </View>
+            </PressableScale>
             <View>
               <Text style={styles.brandName}>Arshia TV</Text>
               <Text style={styles.brandTag}>{copy.brandTag}</Text>
@@ -349,9 +348,7 @@ const HomePage: React.FC<any> = ({ navigation }) => {
 
         <Animated.View style={rise(0, 18)}>
           <PressableScale
-            onPress={() =>
-              featured ? openChannel(featured) : openMovie(featuredMovie)
-            }
+            onPress={() => featured ? openChannel(featured) : openMovie(featuredMovie)}
             style={[styles.hero, { backgroundColor: heroChannelColor }]}
             activeScale={0.985}
             accessibilityLabel={copy.watchNow}
@@ -374,18 +371,10 @@ const HomePage: React.FC<any> = ({ navigation }) => {
             </View>
             <View>
               <Text style={styles.heroTitle} numberOfLines={2}>
-                {featured
-                  ? featured.name
-                  : movieTitle(featuredMovie.id, featuredMovie.title, lang)}
+                {featured ? featured.name : movieTitle(featuredMovie.id, featuredMovie.title, lang)}
               </Text>
               <Text style={styles.heroMeta} numberOfLines={1}>
-                {featured
-                  ? `${groupLabel(featured.group, lang, groupMeta(featured.group).label)} · ${
-                      copy.liveRightNow
-                    }`
-                  : `${genreLabel(featuredMovie.genre, lang)} · ${featuredMovie.year} · ${featuredMovie.rating.toFixed(
-                      1
-                    )} ${copy.rating}`}
+                {featured ? `${groupLabel(featured.group, lang, groupMeta(featured.group).label)} · ${copy.liveRightNow}` : `${genreLabel(featuredMovie.genre, lang)} · ${featuredMovie.year} · ${featuredMovie.rating.toFixed(1)} ${copy.rating}`}
               </Text>
               <View style={styles.heroAction}>
                 <Ionicons name="play" size={14} color={AppTheme.colors.white} />
@@ -420,19 +409,9 @@ const HomePage: React.FC<any> = ({ navigation }) => {
               <Text style={styles.loadingText}>{copy.loading}</Text>
             </View>
           ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.horizontal}
-              contentContainerStyle={styles.horizontalContent}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontal} contentContainerStyle={styles.horizontalContent}>
               {channels.slice(0, HERO_LIVE_COUNT).map((channel, index) => (
-                <LiveCard
-                  key={channel.id}
-                  channel={channel}
-                  index={index}
-                  onPress={() => openChannel(channel)}
-                />
+                <LiveCard key={channel.id} channel={channel} index={index} onPress={() => openChannel(channel)} />
               ))}
             </ScrollView>
           )
@@ -450,24 +429,13 @@ const HomePage: React.FC<any> = ({ navigation }) => {
         </Animated.View>
 
         {!closed.movies ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.horizontal}
-            contentContainerStyle={styles.horizontalContent}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontal} contentContainerStyle={styles.horizontalContent}>
             {MOVIES.slice(0, HERO_MOVIE_COUNT).map((movie, index) => (
-              <MovieCard
-                key={movie.id}
-                movie={movie}
-                index={index}
-                onPress={() => openMovie(movie)}
-              />
+              <MovieCard key={movie.id} movie={movie} index={index} onPress={() => openMovie(movie)} />
             ))}
           </ScrollView>
         ) : null}
-
-        <Animated.View style={rise(0.36)}>
+                <Animated.View style={rise(0.36)}>
           <SectionHeader
             icon="grid-outline"
             title={copy.browse}
@@ -479,26 +447,11 @@ const HomePage: React.FC<any> = ({ navigation }) => {
         </Animated.View>
 
         {!closed.groups ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.horizontal}
-            contentContainerStyle={styles.horizontalContent}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontal} contentContainerStyle={styles.horizontalContent}>
             {(groups.length ? groups : [groupMeta('News')]).map((meta) => (
-              <PressableScale
-                key={meta.key}
-                onPress={() => navigation.navigate('Live', { group: meta.key })}
-                style={[
-                  styles.groupChip,
-                  { backgroundColor: meta.color + '1F', borderColor: meta.color + '59' },
-                ]}
-                accessibilityLabel={groupLabel(meta.key, lang, meta.label)}
-              >
+              <PressableScale key={meta.key} onPress={() => navigation.navigate('Live', { group: meta.key })} style={[styles.groupChip, { backgroundColor: meta.color + '1F', borderColor: meta.color + '59' }]} accessibilityLabel={groupLabel(meta.key, lang, meta.label)}>
                 <Ionicons name={meta.icon as any} size={15} color={meta.color} />
-                <Text style={styles.groupChipText}>
-                  {groupLabel(meta.key, lang, meta.label)}
-                </Text>
+                <Text style={styles.groupChipText}>{groupLabel(meta.key, lang, meta.label)}</Text>
               </PressableScale>
             ))}
           </ScrollView>
@@ -514,336 +467,58 @@ const HomePage: React.FC<any> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: AppTheme.colors.background,
-  },
-  scrollContent: {
-    paddingBottom: AppTheme.spacing.xxl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: AppTheme.spacing.lg,
-    paddingTop: AppTheme.spacing.sm,
-    paddingBottom: AppTheme.spacing.md,
-  },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  brandMark: {
-    width: 38,
-    height: 38,
-    borderRadius: AppTheme.borderRadius.md,
-    backgroundColor: AppTheme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: AppTheme.spacing.sm,
-    ...AppTheme.elevation.md,
-  },
-  brandName: {
-    color: AppTheme.colors.text,
-    fontSize: AppTheme.typography.fontSize.xxl,
-    fontWeight: AppTheme.typography.fontWeight.extrabold,
-    letterSpacing: 0.2,
-  },
-  brandTag: {
-    color: AppTheme.colors.textMuted,
-    fontSize: 9,
-    letterSpacing: 1.4,
-    fontWeight: AppTheme.typography.fontWeight.semibold,
-    marginTop: 1,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: AppTheme.borderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: AppTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-  },
-  hero: {
-    marginHorizontal: AppTheme.spacing.lg,
-    borderRadius: AppTheme.borderRadius.xl,
-    padding: AppTheme.spacing.md,
-    minHeight: 196,
-    justifyContent: 'space-between',
-    overflow: 'hidden',
-    ...AppTheme.elevation.lg,
-  },
-  heroShade: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6,9,16,0.42)',
-  },
-  heroGlow: {
-    position: 'absolute',
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    right: -60,
-    top: -70,
-    opacity: 0.55,
-  },
-  heroWatermark: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-  },
-  heroTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginRight: 116,
-  },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: AppTheme.borderRadius.full,
-    backgroundColor: 'rgba(6,9,16,0.55)',
-  },
-  heroDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: AppTheme.colors.primary,
-    marginRight: 6,
-  },
-  heroBadgeText: {
-    color: AppTheme.colors.white,
-    fontSize: 9,
-    letterSpacing: 1,
-    fontWeight: AppTheme.typography.fontWeight.extrabold,
-  },
-  heroQuality: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: AppTheme.borderRadius.sm,
-    backgroundColor: 'rgba(6,9,16,0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
-  },
-  heroQualityText: {
-    color: AppTheme.colors.white,
-    fontSize: 9,
-    fontWeight: AppTheme.typography.fontWeight.bold,
-  },
-  heroTitle: {
-    color: AppTheme.colors.white,
-    fontSize: 26,
-    fontWeight: AppTheme.typography.fontWeight.extrabold,
-    lineHeight: 30,
-  },
-  heroMeta: {
-    color: 'rgba(255,255,255,0.86)',
-    fontSize: AppTheme.typography.fontSize.sm,
-    marginTop: 4,
-  },
-  heroAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    marginTop: AppTheme.spacing.md,
-    paddingHorizontal: 14,
-    height: 36,
-    borderRadius: AppTheme.borderRadius.full,
-    backgroundColor: 'rgba(6,9,16,0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.28)',
-  },
-  heroActionText: {
-    color: AppTheme.colors.white,
-    fontSize: AppTheme.typography.fontSize.sm,
-    fontWeight: AppTheme.typography.fontWeight.semibold,
-    marginLeft: 6,
-  },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: AppTheme.spacing.lg,
-    marginTop: AppTheme.spacing.md,
-    padding: AppTheme.spacing.md,
-    borderRadius: AppTheme.borderRadius.md,
-    backgroundColor: AppTheme.colors.warning + '14',
-    borderWidth: 1,
-    borderColor: AppTheme.colors.warning + '40',
-  },
-  bannerText: {
-    flex: 1,
-    color: AppTheme.colors.textSecondary,
-    fontSize: AppTheme.typography.fontSize.sm,
-    lineHeight: 18,
-    marginLeft: AppTheme.spacing.sm,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: AppTheme.spacing.lg,
-    paddingVertical: AppTheme.spacing.md,
-  },
-  sectionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: AppTheme.borderRadius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: AppTheme.spacing.sm,
-  },
-  sectionTitle: {
-    color: AppTheme.colors.text,
-    fontSize: AppTheme.typography.fontSize.lg,
-    fontWeight: AppTheme.typography.fontWeight.bold,
-  },
-  sectionHint: {
-    color: AppTheme.colors.textMuted,
-    fontSize: 11,
-    marginTop: 1,
-  },
-  horizontal: {
-    flexGrow: 0,
-  },
-  horizontalContent: {
-    paddingHorizontal: AppTheme.spacing.lg,
-    alignItems: 'center',
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: AppTheme.spacing.lg,
-    paddingVertical: AppTheme.spacing.lg,
-  },
-  loadingText: {
-    color: AppTheme.colors.textSecondary,
-    fontSize: AppTheme.typography.fontSize.sm,
-    marginLeft: AppTheme.spacing.sm,
-  },
-  liveCard: {
-    width: 138,
-    marginRight: AppTheme.spacing.md,
-    borderRadius: AppTheme.borderRadius.lg,
-    backgroundColor: AppTheme.colors.card,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-    overflow: 'hidden',
-  },
-  liveCardArt: {
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  liveTag: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: AppTheme.borderRadius.xs,
-  },
-  liveTagText: {
-    color: AppTheme.colors.white,
-    fontSize: 8,
-    letterSpacing: 0.8,
-    fontWeight: AppTheme.typography.fontWeight.extrabold,
-  },
-  liveCardBody: {
-    padding: AppTheme.spacing.sm,
-  },
-  liveCardName: {
-    color: AppTheme.colors.text,
-    fontSize: AppTheme.typography.fontSize.sm,
-    fontWeight: AppTheme.typography.fontWeight.semibold,
-  },
-  liveCardMeta: {
-    color: AppTheme.colors.textMuted,
-    fontSize: 10,
-    marginTop: 3,
-  },
-  movieCard: {
-    width: 128,
-    marginRight: AppTheme.spacing.md,
-  },
-  poster: {
-    height: 170,
-    borderRadius: AppTheme.borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    ...AppTheme.elevation.md,
-  },
-  posterSheen: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    top: -60,
-    right: -50,
-  },
-  ratingBadge: {
-    position: 'absolute',
-    left: 8,
-    bottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: AppTheme.borderRadius.sm,
-    backgroundColor: 'rgba(6,9,16,0.6)',
-  },
-  ratingText: {
-    color: AppTheme.colors.white,
-    fontSize: 10,
-    fontWeight: AppTheme.typography.fontWeight.bold,
-    marginLeft: 3,
-  },
-  movieTitle: {
-    color: AppTheme.colors.text,
-    fontSize: AppTheme.typography.fontSize.sm,
-    fontWeight: AppTheme.typography.fontWeight.semibold,
-    marginTop: AppTheme.spacing.sm,
-  },
-  movieMeta: {
-    color: AppTheme.colors.textMuted,
-    fontSize: 10,
-    marginTop: 2,
-  },
-  groupChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 38,
-    paddingHorizontal: 14,
-    borderRadius: AppTheme.borderRadius.full,
-    borderWidth: 1,
-    marginRight: AppTheme.spacing.sm,
-  },
-  groupChipText: {
-    color: AppTheme.colors.text,
-    fontSize: AppTheme.typography.fontSize.sm,
-    fontWeight: AppTheme.typography.fontWeight.semibold,
-    marginLeft: 6,
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: AppTheme.spacing.xl,
-    paddingHorizontal: AppTheme.spacing.xl,
-  },
-  footerText: {
-    color: AppTheme.colors.textMuted,
-    fontSize: 11,
-    lineHeight: 16,
-    textAlign: 'center',
-    marginTop: AppTheme.spacing.sm,
-  },
+  container: { flex: 1, backgroundColor: AppTheme.colors.background },
+  scrollContent: { paddingBottom: AppTheme.spacing.xxl },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: AppTheme.spacing.lg, paddingTop: AppTheme.spacing.sm, paddingBottom: AppTheme.spacing.md },
+  brand: { flexDirection: 'row', alignItems: 'center' },
+  brandMark: { width: 38, height: 38, borderRadius: AppTheme.borderRadius.md, backgroundColor: AppTheme.colors.primary, alignItems: 'center', justifyContent: 'center', marginRight: AppTheme.spacing.sm, ...AppTheme.elevation.md },
+  brandName: { color: AppTheme.colors.text, fontSize: AppTheme.typography.fontSize.xxl, fontWeight: AppTheme.typography.fontWeight.extrabold, letterSpacing: 0.2 },
+  brandTag: { color: AppTheme.colors.textMuted, fontSize: 9, letterSpacing: 1.4, fontWeight: AppTheme.typography.fontWeight.semibold, marginTop: 1 },
+  iconButton: { width: 40, height: 40, borderRadius: AppTheme.borderRadius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: AppTheme.colors.surface, borderWidth: 1, borderColor: AppTheme.colors.border },
+  hero: { marginHorizontal: AppTheme.spacing.lg, borderRadius: AppTheme.borderRadius.xl, padding: AppTheme.spacing.md, minHeight: 196, justifyContent: 'space-between', overflow: 'hidden', ...AppTheme.elevation.lg },
+  heroShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(6,9,16,0.42)' },
+  heroGlow: { position: 'absolute', width: 190, height: 190, borderRadius: 95, right: -60, top: -70, opacity: 0.55 },
+  heroWatermark: { position: 'absolute', top: 12, right: 12 },
+  heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginRight: 116 },
+  heroBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9, paddingVertical: 4, borderRadius: AppTheme.borderRadius.full, backgroundColor: 'rgba(6,9,16,0.55)' },
+  heroDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: AppTheme.colors.primary, marginRight: 6 },
+  heroBadgeText: { color: AppTheme.colors.white, fontSize: 9, letterSpacing: 1, fontWeight: AppTheme.typography.fontWeight.extrabold },
+  heroQuality: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: AppTheme.borderRadius.sm, backgroundColor: 'rgba(6,9,16,0.55)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.24)' },
+  heroQualityText: { color: AppTheme.colors.white, fontSize: 9, fontWeight: AppTheme.typography.fontWeight.bold },
+  heroTitle: { color: AppTheme.colors.white, fontSize: 26, fontWeight: AppTheme.typography.fontWeight.extrabold, lineHeight: 30 },
+  heroMeta: { color: 'rgba(255,255,255,0.86)', fontSize: AppTheme.typography.fontSize.sm, marginTop: 4 },
+  heroAction: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: AppTheme.spacing.md, paddingHorizontal: 14, height: 36, borderRadius: AppTheme.borderRadius.full, backgroundColor: 'rgba(6,9,16,0.55)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)' },
+  heroActionText: { color: AppTheme.colors.white, fontSize: AppTheme.typography.fontSize.sm, fontWeight: AppTheme.typography.fontWeight.semibold, marginLeft: 6 },
+  banner: { flexDirection: 'row', alignItems: 'center', marginHorizontal: AppTheme.spacing.lg, marginTop: AppTheme.spacing.md, padding: AppTheme.spacing.md, borderRadius: AppTheme.borderRadius.md, backgroundColor: AppTheme.colors.warning + '14', borderWidth: 1, borderColor: AppTheme.colors.warning + '40' },
+  bannerText: { flex: 1, color: AppTheme.colors.textSecondary, fontSize: AppTheme.typography.fontSize.sm, lineHeight: 18, marginLeft: AppTheme.spacing.sm },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: AppTheme.spacing.lg, paddingVertical: AppTheme.spacing.md },
+  sectionLeft: { flexDirection: 'row', alignItems: 'center' },
+  sectionIcon: { width: 30, height: 30, borderRadius: AppTheme.borderRadius.sm, alignItems: 'center', justifyContent: 'center', marginRight: AppTheme.spacing.sm },
+  sectionTitle: { color: AppTheme.colors.text, fontSize: AppTheme.typography.fontSize.lg, fontWeight: AppTheme.typography.fontWeight.bold },
+  sectionHint: { color: AppTheme.colors.textMuted, fontSize: 11, marginTop: 1 },
+  horizontal: { flexGrow: 0 },
+  horizontalContent: { paddingHorizontal: AppTheme.spacing.lg, alignItems: 'center' },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: AppTheme.spacing.lg, paddingVertical: AppTheme.spacing.lg },
+  loadingText: { color: AppTheme.colors.textSecondary, fontSize: AppTheme.typography.fontSize.sm, marginLeft: AppTheme.spacing.sm },
+  liveCard: { width: 138, marginRight: AppTheme.spacing.md, borderRadius: AppTheme.borderRadius.lg, backgroundColor: AppTheme.colors.card, borderWidth: 1, borderColor: AppTheme.colors.border, overflow: 'hidden' },
+  liveCardArt: { height: 80, alignItems: 'center', justifyContent: 'center' },
+  liveTag: { position: 'absolute', top: 6, left: 6, paddingHorizontal: 6, paddingVertical: 2, borderRadius: AppTheme.borderRadius.xs },
+  liveTagText: { color: AppTheme.colors.white, fontSize: 8, letterSpacing: 0.8, fontWeight: AppTheme.typography.fontWeight.extrabold },
+  liveCardBody: { padding: AppTheme.spacing.sm },
+  liveCardName: { color: AppTheme.colors.text, fontSize: AppTheme.typography.fontSize.sm, fontWeight: AppTheme.typography.fontWeight.semibold },
+  liveCardMeta: { color: AppTheme.colors.textMuted, fontSize: 10, marginTop: 3 },
+  movieCard: { width: 128, marginRight: AppTheme.spacing.md },
+  poster: { height: 170, borderRadius: AppTheme.borderRadius.lg, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', ...AppTheme.elevation.md },
+  posterSheen: { position: 'absolute', width: 150, height: 150, borderRadius: 75, backgroundColor: 'rgba(255,255,255,0.12)', top: -60, right: -50 },
+  ratingBadge: { position: 'absolute', left: 8, bottom: 8, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 3, borderRadius: AppTheme.borderRadius.sm, backgroundColor: 'rgba(6,9,16,0.6)' },
+  ratingText: { color: AppTheme.colors.white, fontSize: 10, fontWeight: AppTheme.typography.fontWeight.bold, marginLeft: 3 },
+  movieTitle: { color: AppTheme.colors.text, fontSize: AppTheme.typography.fontSize.sm, fontWeight: AppTheme.typography.fontWeight.semibold, marginTop: AppTheme.spacing.sm },
+  movieMeta: { color: AppTheme.colors.textMuted, fontSize: 10, marginTop: 2 },
+  groupChip: { flexDirection: 'row', alignItems: 'center', height: 38, paddingHorizontal: 14, borderRadius: AppTheme.borderRadius.full, borderWidth: 1, marginRight: AppTheme.spacing.sm },
+  groupChipText: { color: AppTheme.colors.text, fontSize: AppTheme.typography.fontSize.sm, fontWeight: AppTheme.typography.fontWeight.semibold, marginLeft: 6 },
+  footer: { alignItems: 'center', marginTop: AppTheme.spacing.xl, paddingHorizontal: AppTheme.spacing.xl },
+  footerText: { color: AppTheme.colors.textMuted, fontSize: 11, lineHeight: 16, textAlign: 'center', marginTop: AppTheme.spacing.sm },
 });
 
 export default HomePage;
+        
