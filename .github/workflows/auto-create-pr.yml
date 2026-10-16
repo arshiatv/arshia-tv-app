@@ -1,0 +1,32 @@
+name: Auto-create PR
+
+on:
+  push:
+    branches:
+      - 'feature/force-update-realtime-auth-gate'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create PR via GitHub API
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'feat: Force update + Admin-managed content',
+              head: 'feature/force-update-realtime-auth-gate',
+              base: 'main',
+              body: 'Automatic PR for feature branch updates.'
+            });
+            

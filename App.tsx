@@ -1,138 +1,231 @@
-import React from 'react';
-import { StatusBar } from 'react-native';
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Theme } from './theme/AppTheme';
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  SafeAreaView,
+  ScrollView,
+  View,
+  Text,
+  Button,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Linking,
+} from "react-native";
+import * as Application from "expo-application";
+import Constants from "expo-constants";
 
-import HomePage from './screens/HomePage';
-import LiveChannelsPage from './screens/LiveChannelsPage';
-import MoviesPage from './screens/MoviesPage';
-import MorePage from './screens/MorePage';
-import PlayerPage from './screens/PlayerPage';
+// Project's lightweight Firebase helper (REST-based)
+import { fbGet, fbSet, createPollListener } from "services/firebase";
 
-import IranianSatellitePage from './screens/IranianSatellitePage';
-import SearchPage from './screens/SearchPage';
-import SeriesPage from './screens/SeriesPage';
-import FavoritesPage from './screens/FavoritesPage';
-import SubscriptionPage from './screens/SubscriptionPage';
-import InstallPage from './screens/InstallPage';
-import PrivacyPage from './screens/PrivacyPage';
-import AdminPage from './screens/AdminPage';
-
-import { AdminProvider } from './context/AdminContext';
-import { FavoritesProvider } from './context/FavoritesContext';
-import { LanguageProvider, useTranslation } from './locales';
-
-const Tab = createBottomTabNavigator();
-const RootStack = createNativeStackNavigator();
-const MoreStack = createNativeStackNavigator();
-
-// Spread the built-in theme so React Navigation keeps its `fonts` object.
-const navigationTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    primary: Theme.colors.primary,
-    background: Theme.colors.background,
-    card: Theme.colors.surface,
-    text: Theme.colors.text,
-    border: Theme.colors.border,
-    notification: Theme.colors.primary,
-  },
-};
-
-const TAB_ICONS: Record<string, { active: string; inactive: string }> = {
-  Home: { active: 'home', inactive: 'home-outline' },
-  Live: { active: 'tv', inactive: 'tv-outline' },
-  Movies: { active: 'film', inactive: 'film-outline' },
-  More: { active: 'grid', inactive: 'grid-outline' },
-};
-
-const TAB_LABELS = {
-  en: { Home: 'Home', Live: 'Live TV', Movies: 'Movies', More: 'More' },
-  fa: { Home: 'خانه', Live: 'تلویزیون زنده', Movies: 'فیلم‌ها', More: 'بیشتر' },
-};
-
-function MoreNavigator() {
-  return (
-    <MoreStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <MoreStack.Screen name="MoreMenu" component={MorePage} />
-      <MoreStack.Screen name="IranianSatellite" component={IranianSatellitePage} />
-      <MoreStack.Screen name="Search" component={SearchPage} />
-      <MoreStack.Screen name="Series" component={SeriesPage} />
-      <MoreStack.Screen name="Favorites" component={FavoritesPage} />
-      <MoreStack.Screen name="Subscription" component={SubscriptionPage} />
-      <MoreStack.Screen name="InstallApp" component={InstallPage} />
-      <MoreStack.Screen name="Privacy" component={PrivacyPage} />
-      <MoreStack.Screen name="Admin" component={AdminPage} />
-    </MoreStack.Navigator>
-  );
+function versionToNumber(v?: string | null): number {
+  if (!v) return 0;
+  const parts = v.split(".").map((p) => parseInt(p, 10) || 0);
+  while (parts.length < 3) parts.push(0);
+  return parts[0] * 1_000_000 + parts[1] * 1_000 + parts[2];
 }
 
-function Tabs() {
-  const { lang } = useTranslation();
-  const labels = TAB_LABELS[lang];
+export default function App(): JSX.Element {
+  const [initializing, setInitializing] = useState(true);
+  const [localVersion, setLocalVersion] = useState<string | null>(null);
+  const [remoteVersion, setRemoteVersion] = useState<string | null>(null);
+  const [forceUpdateUrl, setForceUpdateUrl] = useState<string | null>(null);
+  const [forceRequired, setForceRequired] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: Theme.colors.selection.active,
-        tabBarInactiveTintColor: Theme.colors.selection.inactive,
-        tabBarStyle: {
-          backgroundColor: Theme.colors.surface,
-          borderTopColor: Theme.colors.border,
-          borderTopWidth: 1,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10.5,
-          fontWeight: Theme.typography.fontWeight.semibold,
-        },
-        tabBarIcon: ({ color, focused }) => {
-          const icons = TAB_ICONS[route.name] || TAB_ICONS.Home;
-          return (
-            <Ionicons
-              name={(focused ? icons.active : icons.inactive) as any}
-              size={focused ? 23 : 21}
-              color={color}
-            />
-          );
-        },
-      })}
-    >
-      <Tab.Screen name="Home" component={HomePage} options={{ title: labels.Home }} />
-      <Tab.Screen name="Live" component={LiveChannelsPage} options={{ title: labels.Live }} />
-      <Tab.Screen name="Movies" component={MoviesPage} options={{ title: labels.Movies }} />
-      <Tab.Screen name="More" component={MoreNavigator} options={{ title: labels.More }} />
-    </Tab.Navigator>
-  );
-}
+  useEffect(() => {
+    try {
+      const v =
+        (Application && (Application.nativeApplicationVersion || Application.applicationVersion)) ||
+        (Constants?.manifest?.version as string) ||
+        null;
+      setLocalVersion(v ?? null);
+    } catch {
+      setLocalVersion(null);
+    }
+  }, []);
 
-export default function App() {
-  return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" />
-      <LanguageProvider>
-        <AdminProvider>
-          <FavoritesProvider>
-            <NavigationContainer theme={navigationTheme}>
-              <RootStack.Navigator screenOptions={{ headerShown: false }}>
-                <RootStack.Screen name="Tabs" component={Tabs} />
-                <RootStack.Screen
-                  name="Player"
-                  component={PlayerPage}
-                  options={{ animation: 'slide_from_bottom', presentation: 'fullScreenModal' }}
-                />
-              </RootStack.Navigator>
-            </NavigationContainer>
-          </FavoritesProvider>
-        </AdminProvider>
-      </LanguageProvider>
-    </SafeAreaProvider>
-  );
+  useEffect(() => {
+    let versionListener: ReturnType<typeof createPollListener> | null = null;
+    let urlListener: ReturnType<typeof createPollListener> | null = null;
+
+    try {
+      versionListener = createPollListener("current_version", 3000);
+      urlListener = createPollListener("force_update_url", 3000);
+
+      versionListener.start((data: any) => {
+        const val = data ?? null;
+        setRemoteVersion(val === null ? null : String(val));
+      });
+
+      urlListener.start((data: any) => {
+        const val = data ?? null;
+        setForceUpdateUrl(val === null ? null : String(val));
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("Polling not available, will fallback to manual fetch.", err);
+      const id = setInterval(async () => {
+        try {
+          const rv = await fbGet("current_version");
+          setRemoteVersion(rv == null ? null : String(rv));
+          const ru = await fbGet("force_update_url");
+          setForceUpdateUrl(ru == null ? null : String(ru));
+        } catch {
+          // ignore fetch errors
+        }
+      }, 5000);
+      return () => clearInterval(id);
+    }
+
+    setInitializing(false);
+
+    return () => {
+      try { versionListener && versionListener.stop(); } catch {}
+      try { urlListener && urlListener.stop(); } catch {}
+    };
+  }, []);
+
+  useEffect(() => {
+    const r = versionToNumber(remoteVersion);
+    const l = versionToNumber(localVersion);
+    setForceRequired(r > l);
+  }, [remoteVersion, localVersion]);
+
+  const unlockAdmin = useCallback(async () => {
+    setBusy(true);
+    try {
+      const remote = await fbGet("pin");
+      const remotePin = remote ?? null;
+      if (!remotePin) {
+        Alert.alert("No PIN set", "Admin PIN is not configured in remote database.");
+        setBusy(false);
+        return;
       }
-        
+      if (String(pinInput).trim() === String(remotePin).trim()) {
+        setIsAdminUnlocked(true);
+        setPinInput("");
+        Alert.alert("Unlocked", "Admin area unlocked.");
+      } else {
+        Alert.alert("Invalid PIN", "The PIN you entered is incorrect.");
+      }
+    } catch (err: any) {
+      Alert.alert("Error", String(err?.message ?? err));
+    } finally {
+      setBusy(false);
+    }
+  }, [pinInput]);
+
+  const lockAdmin = useCallback(() => {
+    setIsAdminUnlocked(false);
+  }, []);
+
+  const adminWriteDemo = useCallback(async () => {
+    if (!isAdminUnlocked) {
+      Alert.alert("Not unlocked", "Unlock admin area first.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await fbSet("content/example_admin_entry", {
+        updatedAt: Date.now(),
+        note: "Written from app admin demo",
+      });
+      Alert.alert("Success", "Admin write completed.");
+    } catch (err: any) {
+      Alert.alert("Write error", String(err?.message ?? err));
+    } finally {
+      setBusy(false);
+    }
+  }, [isAdminUnlocked]);
+
+  const openUpdate = useCallback((url?: string | null) => {
+    if (!url) {
+      Alert.alert("No update URL", "There is no update URL set by admin.");
+      return;
+    }
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (!supported) {
+          Alert.alert("Cannot open URL", url);
+          return;
+        }
+        Linking.openURL(url).catch((e) => Alert.alert("Open failed", String(e)));
+      })
+      .catch((e) => Alert.alert("Open failed", String(e)));
+  }, []);
+
+  if (initializing) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" />
+          <Text style={styles.text}>Initializing…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>Arshia TV — App Shell</Text>
+
+        {forceRequired && (
+          <View style={styles.forceBox}>
+            <Text style={styles.forceTitle}>Update required</Text>
+            <Text style={styles.text}>
+              Your version {localVersion ?? "unknown"} is older than required {remoteVersion}.
+            </Text>
+            <Button title="Open update page" onPress={() => openUpdate(forceUpdateUrl)} />
+          </View>
+        )}
+
+        <View style={styles.card}>
+          <Text style={styles.h2}>Admin Unlock</Text>
+          <Text style={styles.text}>
+            This uses the PIN stored at the database path "/pin" (root). AdminPage uses the same.
+          </Text>
+          {!isAdminUnlocked ? (
+            <>
+              <TextInput
+                placeholder="Enter admin PIN"
+                value={pinInput}
+                onChangeText={setPinInput}
+                style={styles.input}
+                keyboardType="number-pad"
+                editable={!busy}
+              />
+              <View style={styles.row}>
+                <Button title="Unlock" onPress={unlockAdmin} disabled={busy || !pinInput.trim()} />
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.text}>Status: Unlocked ✅</Text>
+              <View style={styles.row}>
+                <Button title="Test Admin Write" onPress={adminWriteDemo} disabled={busy} />
+                <Button title="Lock Admin" onPress={lockAdmin} color="#d9534f" />
+              </View>
+            </>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#121212" },
+  content: { padding: 20 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  title: { fontSize: 24, fontWeight: "bold", color: "#fff", marginBottom: 20, textAlign: "center" },
+  h2: { fontSize: 18, fontWeight: "bold", color: "#fff", marginBottom: 10 },
+  text: { fontSize: 14, color: "#aaa", marginBottom: 15 },
+  input: { backgroundColor: "#222", color: "#fff", padding: 10, borderRadius: 5, marginBottom: 15, borderWidth: 1, borderColor: "#444" },
+  card: { backgroundColor: "#1e1e1e", padding: 15, borderRadius: 8, marginBottom: 20 },
+  forceBox: { backgroundColor: "#d9534f", padding: 15, borderRadius: 8, marginBottom: 20 },
+  forceTitle: { fontSize: 18, fontWeight: "bold", color: "#fff", marginBottom: 5 },
+  row: { flexDirection: "row", justifyContent: "space-between", marginTop: 5 },
+});
