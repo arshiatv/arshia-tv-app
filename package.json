@@ -6,7 +6,7 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "eas-build-pre-install": "npx expo install --fix"
+    "eas-build-pre-install": "rm -rf yarn.lock package-lock.json node_modules"
   },
   "dependencies": {
     "react": "18.3.1",
@@ -15,9 +15,9 @@
     "expo": "~52.0.28",
     "expo-application": "~6.0.2",
     "expo-updates": "~0.26.12",
-    "@react-navigation/native": "^7.0.0",
-    "@react-navigation/native-stack": "^7.0.0",
-    "@react-navigation/bottom-tabs": "^7.0.0",
+    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/native-stack": "^7.8.2",
+    "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/elements": "^2.2.8",
     "@react-native-async-storage/async-storage": "1.24.0",
     "@expo/vector-icons": "^14.0.4",
@@ -27,7 +27,7 @@
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
     "i18n-js": "^4.4.3",
-    "firebase": "^10.0.0"
+    "firebase": "^10.12.0"
   },
   "devDependencies": {
     "@types/react": "~18.3.12",
