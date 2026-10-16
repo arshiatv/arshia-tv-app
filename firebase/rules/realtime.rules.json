@@ -1,34 +1,27 @@
 {
   "rules": {
     "admins": {
-      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
     },
     "content": {
       ".read": true,
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
-      "persian": {
-        "movies": {
-          ".read": true,
-          ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
-        },
-        "series": {
-          ".read": true,
-          ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
-        }
-      }
+      ".write": "auth != null && auth.token.admin === true"
     },
     "ads": {
       ".read": true,
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+      ".write": "auth != null && auth.token.admin === true"
     },
     "current_version": {
       ".read": true,
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+      ".write": "auth != null && auth.token.admin === true"
     },
     "force_update_url": {
       ".read": true,
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
-    }
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    // default: read public, write only admin
+    ".read": true,
+    ".write": false
   }
 }
