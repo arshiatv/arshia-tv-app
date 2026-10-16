@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   create_pr:
@@ -20,14 +21,12 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            // github-script injects `github` and `context`; avoid redeclaring core/other injected globals
-            const body = fs.existsSync('PR_NOTES.md') ? fs.readFileSync('PR_NOTES.md','utf8') : 'Automatic PR for feature branch';
-            const { data } = await github.rest.pulls.create({
+            await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: 'feat: Force update + Admin-managed content',
               head: 'feature/force-update-realtime-auth-gate',
               base: 'main',
-              body,
+              body: 'Automatic PR for feature branch updates.'
             });
-            console.log(`PR created: ${data.html_url}`);
+            
