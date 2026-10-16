@@ -1,1 +1,46 @@
+name: Deploy Firebase on main
 
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Firebase Tools
+        run: npm install -g firebase-tools@11 || npm install -g firebase-tools
+
+      - name: Authenticate with service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > $HOME/serviceAccount.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/serviceAccount.json
+          firebase --version
+
+      - name: (Optional) Set admin custom claim
+        if: ${{ secrets.ADMIN_UID != '' }}
+        env:
+          ADMIN_UID: ${{ secrets.ADMIN_UID }}
+        run: |
+          node functions/setAdminClaim.js $HOME/serviceAccount.json "$ADMIN_UID"
+
+      - name: Deploy Database, Storage rules and Functions
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only database,storage,functions --non-interactive || exit 1
