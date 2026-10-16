@@ -32,6 +32,11 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/serviceAccount.json
           firebase --version
 
+      - name: Install functions dependencies
+        run: |
+          # ensure functions dependencies are installed for setAdminClaim or local checks
+          npm --prefix functions ci
+
       - name: (Optional) Set admin custom claim
         if: ${{ secrets.ADMIN_UID != '' }}
         env:
