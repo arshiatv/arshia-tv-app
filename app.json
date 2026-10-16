@@ -57,7 +57,7 @@
       ]
     ],
     "extra": {
-      "firebaseUrl": "https://firebaseio.com",
+      "firebaseUrl": "https://arshiyatv-59a63-default-rtdb.firebaseio.com",
       "eas": {
         "projectId": "72e1830e-4fde-481b-9dee-2835c5c820f5"
       }
