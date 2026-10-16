@@ -2,6 +2,7 @@
   "expo": {
     "name": "Arshia TV",
     "slug": "hadi",
+    "owner": "arshiyatv1-team",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
