@@ -10,7 +10,6 @@ import {
   Alert,
   StyleSheet,
   Linking,
-  TouchableOpacity,
 } from "react-native";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
@@ -34,10 +33,6 @@ export default function App(): JSX.Element {
   const [pinInput, setPinInput] = useState("");
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [busy, setBusy] = useState(false);
-  
-  // شمارنده برای ۷ بار کلیک مخفی
-  const [logoClicks, setLogoClicks] = useState(0);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   useEffect(() => {
     try {
@@ -97,37 +92,25 @@ export default function App(): JSX.Element {
     setForceRequired(r > l);
   }, [remoteVersion, localVersion]);
 
-  // منطق کلیک روی لوگو
-  const handleLogoPress = () => {
-    const nextClicks = logoClicks + 1;
-    if (nextClicks >= 7) {
-      setLogoClicks(0);
-      setShowAdminPanel(true);
-      Alert.alert("منوی مخفی", "پنل مدیریت فعال شد.");
-    } else {
-      setLogoClicks(nextClicks);
-    }
-  };
-
   const unlockAdmin = useCallback(async () => {
     setBusy(true);
     try {
       const remote = await fbGet("pin");
       const remotePin = remote ?? null;
       if (!remotePin) {
-        Alert.alert("خطا", "پین کدی در دیتابیس ست نشده است.");
+        Alert.alert("Error", "Admin PIN is not configured in remote database.");
         setBusy(false);
         return;
       }
       if (String(pinInput).trim() === String(remotePin).trim()) {
         setIsAdminUnlocked(true);
         setPinInput("");
-        Alert.alert("موفقیت", "قفل مدیریت باز شد.");
+        Alert.alert("Unlocked", "Admin area unlocked.");
       } else {
-        Alert.alert("خطا", "پین کد اشتباه است.");
+        Alert.alert("Invalid PIN", "The PIN you entered is incorrect.");
       }
     } catch (err: any) {
-      Alert.alert("خطای شبکه", "اتصال به دیتابیس برقرار نشد. فیلترشکن خود را بررسی کنید.");
+      Alert.alert("Error", "اتصال به دیتابیس برقرار نشد. آدرس فایربیس را چک کنید.");
     } finally {
       setBusy(false);
     }
@@ -135,12 +118,11 @@ export default function App(): JSX.Element {
 
   const lockAdmin = useCallback(() => {
     setIsAdminUnlocked(false);
-    setShowAdminPanel(false);
   }, []);
 
   const adminWriteDemo = useCallback(async () => {
     if (!isAdminUnlocked) {
-      Alert.alert("خطا", "ابتدا قفل پنل را باز کنید.");
+      Alert.alert("Not unlocked", "Unlock admin area first.");
       return;
     }
     setBusy(true);
@@ -149,9 +131,9 @@ export default function App(): JSX.Element {
         updatedAt: Date.now(),
         note: "Written from app admin demo",
       });
-      Alert.alert("موفقیت", "دیتا با موفقیت در فایربیس ثبت شد.");
+      Alert.alert("Success", "Admin write completed.");
     } catch (err: any) {
-      Alert.alert("خطا در نوشتن", String(err?.message ?? err));
+      Alert.alert("Write error", String(err?.message ?? err));
     } finally {
       setBusy(false);
     }
@@ -159,26 +141,26 @@ export default function App(): JSX.Element {
 
   const openUpdate = useCallback((url?: string | null) => {
     if (!url) {
-      Alert.alert("خطا", "لینک آپدیت موجود نیست.");
+      Alert.alert("No update URL", "There is no update URL set by admin.");
       return;
     }
     Linking.canOpenURL(url)
       .then((supported) => {
         if (!supported) {
-          Alert.alert("خطا", "امکان باز کردن لینک وجود ندارد.");
+          Alert.alert("Cannot open URL", url);
           return;
         }
-        Linking.openURL(url).catch((e) => Alert.alert("خطا", String(e)));
+        Linking.openURL(url).catch((e) => Alert.alert("Open failed", String(e)));
       })
-      .catch((e) => Alert.alert("خطا", String(e)));
+      .catch((e) => Alert.alert("Open failed", String(e)));
   }, []);
 
   if (initializing) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#00ffff" />
-          <Text style={styles.text}>در حال راه‌اندازی برنامه...</Text>
+          <ActivityIndicator size="large" />
+          <Text style={styles.text}>Initializing…</Text>
         </View>
       </SafeAreaView>
     );
@@ -187,70 +169,63 @@ export default function App(): JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        
-        {/* لوگوی برنامه که قابلیت کلیک مخفی دارد */}
-        <TouchableOpacity activeOpacity={0.8} onPress={handleLogoPress} style={styles.logoContainer}>
-          <Text style={styles.title}>Arshia TV</Text>
-          <Text style={styles.subtitle}>خوش آمدید</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Arshia TV — Admin Shell</Text>
 
         {forceRequired && (
           <View style={styles.forceBox}>
-            <Text style={styles.forceTitle}>به‌روزرسانی اجباری</Text>
+            <Text style={styles.forceTitle}>Update required</Text>
             <Text style={styles.text}>
-              نسخه شما قدیمی است. لطفا برنامه را آپدیت کنید.
+              Your version {localVersion ?? "unknown"} is older than required {remoteVersion}.
             </Text>
-            <Button title="دانلود نسخه جدید" onPress={() => openUpdate(forceUpdateUrl)} color="#00ff00" />
+            <Button title="Open update page" onPress={() => openUpdate(forceUpdateUrl)} />
           </View>
         )}
 
-        {/* پنل مدیریت کاملا مخفی است و فقط بعد از ۷ بار کلیک روی لوگو ظاهر می‌شود */}
-        {showAdminPanel && (
-          <View style={styles.card}>
-            <Text style={styles.h2}>ورود به پنل مدیریت</Text>
-            {!isAdminUnlocked ? (
-              <>
-                <TextInput
-                  placeholder="پین کد را وارد کنید"
-                  placeholderTextColor="#666"
-                  value={pinInput}
-                  onChangeText={setPinInput}
-                  style={styles.input}
-                  keyboardType="number-pad"
-                  editable={!busy}
-                />
-                <View style={styles.row}>
-                  <Button title="تایید و باز کردن" onPress={unlockAdmin} disabled={busy || !pinInput.trim()} />
-                </View>
-              </>
-            ) : (
-              <>
-                <Text style={styles.text}>وضعیت مدیریت: متصل و باز ✅</Text>
-                <View style={styles.row}>
-                  <Button title="تست نوشتن دیتابیس" onPress={adminWriteDemo} disabled={busy} />
-                  <Button title="قفل کردن مجدد" onPress={lockAdmin} color="#d9534f" />
-                </View>
-              </>
-            )}
-          </View>
-        )}
+        <View style={styles.card}>
+          <Text style={styles.h2}>Admin Unlock</Text>
+          <Text style={styles.text}>
+            This uses the PIN stored at the database path "/pin" (root).
+          </Text>
+          {!isAdminUnlocked ? (
+            <>
+              <TextInput
+                placeholder="Enter admin PIN"
+                value={pinInput}
+                onChangeText={setPinInput}
+                style={styles.input}
+                keyboardType="number-pad"
+                editable={!busy}
+              />
+              <View style={styles.row}>
+                <Button title="Unlock" onPress={unlockAdmin} disabled={busy || !pinInput.trim()} />
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.text}>Status: Unlocked ✅</Text>
+              <View style={styles.row}>
+                <Button title="Test Admin Write" onPress={adminWriteDemo} disabled={busy} />
+                <Button title="Lock Admin" onPress={lockAdmin} color="#d9534f" />
+              </View>
+            </>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0A0E17" },
-  content: { padding: 20, alignItems: "center" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0A0E17" },
-  logoContainer: { padding: 40, alignItems: "center", marginVertical: 40 },
-  title: { fontSize: 36, fontWeight: "bold", color: "#00ffff", textAlign: "center" },
-  subtitle: { fontSize: 16, color: "#aaa", marginTop: 10 },
-  h2: { fontSize: 18, fontWeight: "bold", color: "#fff", marginBottom: 15, textAlign: "right", width: "100%" },
-  text: { fontSize: 14, color: "#aaa", marginBottom: 15, textAlign: "center" },
-  input: { backgroundColor: "#1a1a2e", color: "#fff", padding: 12, borderRadius: 8, marginBottom: 15, borderWidth: 1, borderColor: "#00ffff", width: 250, textAlign: "center" },
-  card: { backgroundColor: "#151a30", padding: 20, borderRadius: 12, marginBottom: 20, width: "100%", border豎Width: 1, borderColor: "#333" },
-  forceBox: { backgroundColor: "#d9534f", padding: 15, borderRadius: 8, marginBottom: 20, width: "100%" },
-  forceTitle: { fontSize: 18, fontWeight: "bold", color: "#fff", marginBottom: 5, textAlign: "right" },
-  row: { flexDirection: "row", justifyContent: "space-around", marginTop: 5, width: "100%" },
+  container: { flex: 1, backgroundColor: "#121212" },
+  content: { padding: 20 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  title: { fontSize: 24, fontWeight: "bold", color: "#fff", marginBottom: 20, textAlign: "center" },
+  h2: { fontSize: 18, fontWeight: "bold", color: "#fff", marginBottom: 10 },
+  text: { fontSize: 14, color: "#aaa", marginBottom: 15 },
+  input: { backgroundColor: "#222", color: "#fff", padding: 10, borderRadius: 5, marginBottom: 15, borderWidth: 1, borderColor: "#444" },
+  card: { backgroundColor: "#1e1e1e", padding: 15, borderRadius: 8, marginBottom: 20 },
+  forceBox: { backgroundColor: "#d9534f", padding: 15, borderRadius: 8, marginBottom: 20 },
+  forceTitle: { fontSize: 18, fontWeight: "bold", color: "#fff", marginBottom: 5 },
+  row: { flexDirection: "row", justifyContent: "space-between", marginTop: 5 },
 });
+        
