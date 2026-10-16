@@ -11,7 +11,17 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "services/*": ["services/*"],
+      "src/*": ["src/*"],
+      "components/*": ["components/*"],
+      "context/*": ["context/*"],
+      "data/*": ["data/*"],
+      "theme/*": ["theme/*"],
+      "locales/*": ["locales/*"]
+    }
   },
   "include": [
     "**/*.ts",
@@ -21,4 +31,3 @@
     "node_modules"
   ]
 }
-
