@@ -1,1 +1,11 @@
-
+{
+  "database": {
+    "rules": "firebase/rules/realtime.rules.json"
+  },
+  "storage": {
+    "rules": "firebase/rules/storage.rules"
+  },
+  "functions": {
+    "source": "functions"
+  }
+}
