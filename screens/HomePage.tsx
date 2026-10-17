@@ -151,9 +151,14 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onPress }) => {
     <Animated.View
       style={{
         opacity: enter,
-        transform: [{ translateY: enter.interpolate({ inputRange:, outputRange: [22, 0] }) }],
-      }}
-    >
+          transform: [{ 
+            translateY: enter.interpolate({ 
+              inputRange: Array.of(0, 1), 
+              outputRange: Array.of(22, 0) 
+            }) 
+          }]
+        }}
+        >
       <PressableScale
         onPress={onPress}
         style={styles.movieCard}
@@ -262,7 +267,7 @@ const HomePage: React.FC<any> = ({ navigation }) => {
   const rise = (start: number, distance: number = 26) => ({
     opacity: enter.interpolate({
       inputRange: [start, Math.min(start + 0.45, 1)],
-      outputRange:,
+      outputRange: Array.of(0, 1),
       extrapolate: 'clamp',
     }),
     transform: [
