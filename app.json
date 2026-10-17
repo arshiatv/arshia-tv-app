@@ -1,0 +1,80 @@
+{
+  "expo": {
+    "name": "Arshia TV",
+    "slug": "hadi",
+    "owner": "arshiyatv1-team",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0E17",
+    "runtimeVersion": "snapp-sdk52-v1",
+    "updates": {
+      "url": "https://expo.dev",
+      "enabled": true,
+      "checkAutomatically": "ON_START",
+      "fallbackToCacheTimeout": 30000
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.snapp.arshiatv",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIDeviceFamily": [
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0E17"
+      },
+      "package": "com.snapp.arshiatv",
+      "isTV": true,
+      "intentFilters": [
+        {
+          "action": "android.intent.action.MAIN",
+          "categories": [
+            "android.intent.category.LAUNCHER",
+            "android.intent.category.LEANBACK_LAUNCHER"
+          ]
+        }
+      ],
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#0A0E17"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-video",
+        {
+          "supportsPictureInPicture": true
+        }
+      ]
+    ],
+    "extra": {
+      "firebaseUrl": "https://arshiyatv-59a63-default-rtdb.firebaseio.com",
+      "eas": {
+        "projectId": "72e1830e-4fde-481b-9dee-2835c5c820f5"
+      }
+    },
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0E17"
+    }
+  }
+}
