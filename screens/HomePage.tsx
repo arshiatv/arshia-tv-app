@@ -98,9 +98,14 @@ const LiveCard: React.FC<LiveCardProps> = ({ channel, index, onPress }) => {
   return (
     <Animated.View
       style={{
-        opacity: enter,
-        transform: [{ translateY: enter.interpolate({ inputRange:, outputRange: [22, 0] }) }],
-      }}
+    opacity: enter,
+    transform: [{ 
+        translateY: enter.interpolate({ 
+            inputRange: Array.of(0, 1), 
+            outputRange: Array.of(22, 0) 
+        }) 
+    }]
+}}
     >
       <PressableScale onPress={onPress} style={styles.liveCard} accessibilityLabel={channel.name}>
         <View style={[styles.liveCardArt, { backgroundColor: meta.color + '1F' }]}>
