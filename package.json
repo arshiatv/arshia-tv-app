@@ -1,0 +1,38 @@
+{
+  "name": "snapp-app",
+  "version": "1.0.0",
+  "main": "expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "eas-build-pre-install": "rm -rf yarn.lock package-lock.json node_modules"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "axios": "^1.7.9",
+    "react-native": "0.76.7",
+    "expo": "~52.0.28",
+    "expo-application": "~6.0.2",
+    "expo-updates": "~0.26.12",
+    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/native-stack": "^7.8.2",
+    "@react-navigation/bottom-tabs": "^7.2.0",
+    "@react-navigation/elements": "^2.2.8",
+    "@react-native-async-storage/async-storage": "1.24.0",
+    "@expo/vector-icons": "^14.0.4",
+    "@supabase/supabase-js": "2.45.4",
+    "expo-localization": "~16.0.1",
+    "expo-video": "~2.0.4",
+    "expo-image-picker": "~16.0.4",
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-screens": "~4.4.0",
+    "i18n-js": "^4.4.3",
+    "firebase": "^10.12.0"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "typescript": "^5.3.3",
+    "babel-plugin-module-resolver": "^5.0.2"
+  }
+}
