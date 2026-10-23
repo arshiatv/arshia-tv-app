@@ -4,6 +4,7 @@ import {
   Alert,
   Animated,
   Easing,
+  FlatList,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -867,18 +868,27 @@ const LiveChannelsPage: React.FC<any> = ({ navigation, route }) => {
               </Text>
               <Text style={styles.openFolderCount}>{openSection.items.length}</Text>
             </View>
-            <View style={styles.rows}>
-              {openSection.items.map((channel, index) => (
+            {/* Virtualized list — keeps UI smooth even with 500+ channels in one folder */}
+            <FlatList
+              data={openSection.items}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item: channel, index }) => (
                 <ChannelButton
-                  key={channel.id}
                   channel={channel}
                   index={index}
                   isActive={active?.id === channel.id}
                   onPress={() => selectChannel(channel)}
                   onLongPress={isAdmin ? () => confirmRemove(channel) : undefined}
                 />
-              ))}
-            </View>
+              )}
+              initialNumToRender={18}
+              maxToRenderPerBatch={24}
+              windowSize={7}
+              removeClippedSubviews
+              scrollEnabled={false}
+              nestedScrollEnabled={false}
+              style={styles.rows}
+            />
           </View>
         ) : null}
 

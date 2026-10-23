@@ -4,6 +4,7 @@ import {
   Animated,
   Easing,
   RefreshControl,
+  FlatList,
   ScrollView,
   StyleSheet,
   Text,
@@ -256,16 +257,25 @@ const IranianSatellitePage: React.FC<any> = ({ navigation }) => {
                 </View>
               </InsetPressable>
 
-              {isOpen
-                ? section.items.map((channel, index) => (
+              {isOpen ? (
+                <FlatList
+                  data={section.items}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item: channel, index }) => (
                     <NetworkChannelRow
-                      key={channel.id}
                       channel={channel}
                       index={index}
                       onPress={() => openChannel(channel, section.network)}
                     />
-                  ))
-                : null}
+                  )}
+                  initialNumToRender={16}
+                  maxToRenderPerBatch={20}
+                  windowSize={6}
+                  removeClippedSubviews
+                  scrollEnabled={false}
+                  nestedScrollEnabled={false}
+                />
+              ) : null}
             </Animated.View>
           );
         })}
