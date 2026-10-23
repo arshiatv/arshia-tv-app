@@ -45,6 +45,7 @@ export const GROUPS: GroupMeta[] = [
   { key: 'Cooking', label: 'Cooking & Food', icon: 'restaurant-outline', color: '#F97316' },
   { key: 'Lifestyle', label: 'Lifestyle', icon: 'cafe-outline', color: '#FB923C' },
   { key: 'Family', label: 'Family & Parenting', icon: 'people-outline', color: '#F43F5E' },
+  { key: 'Sex', label: 'Adult / Sex', icon: 'heart-outline', color: '#BE185D' },
   { key: 'Other', label: 'Other', icon: 'ellipsis-horizontal-circle-outline', color: '#6C7A90' },
 ];
 
@@ -136,6 +137,7 @@ export function groupKeyFor(raw: string): string {
     { key: 'Music', needles: ['music', 'dance', 'pmc', 'tapesh', 'آهنگ', 'موسیقی'] },
     { key: 'Cooking', needles: ['cook', 'food', 'culinary', 'آشپز', 'غذا'] },
     { key: 'Lifestyle', needles: ['lifestyle', 'travel', 'auto', 'shop', 'سفر', 'خودرو'] },
+    { key: 'Sex', needles: ['xxx', 'porn', 'adult', 'erotic', 'hustler', 'playboy', 'brazzers', 'sex channel', 'سکس', 'پورن'] },
     { key: 'Family', needles: ['family', 'parent', 'خانواده'] },
     { key: 'General', needles: ['general', 'public', 'irib', 'national', 'provincial', 'سراسری', 'استانی', 'ماهواره'] },
   ];
@@ -160,6 +162,7 @@ export function refineGroupByName(group: string, name: string): string {
   if (/motivat|tedx|success|inspir|انگیزش|موفقیت|self.?help/i.test(n)) return 'Motivation';
   if (/cartoon|nick(?:elodeon)?|disney junior|boomerang|پویا|نهال|کودک|کارتون/i.test(n) && group !== 'Kids') return 'Kids';
   if (/quran|قرآن|islamic|مذهب/i.test(n)) return 'Religious';
+  if (/\bxxx\b|porn|hustler|playboy|brazzers|erotic|adult channel|سکس|پورن/i.test(n)) return 'Sex';
   if (/beinsport|espn|sky sports|fox sports|varzesh|ورزش|فوتبال|uefa|nba|nfl/i.test(n) && group === 'Other') return 'Sports';
 
   return group;
@@ -332,6 +335,54 @@ const SAMPLE_SEED: SampleSeed[] = [
   { name: 'Motivation Hub', group: 'Motivation' },
   { name: 'TED Channel', group: 'Motivation' },
   { name: 'Family Channel', group: 'Family' },
+
+  // Extra wrestling / combat
+  { name: 'WWE Raw Live', group: 'Wrestling' },
+  { name: 'WWE SmackDown Live', group: 'Wrestling' },
+  { name: 'AEW Dynamite Live', group: 'Wrestling' },
+  { name: 'AEW Rampage', group: 'Wrestling' },
+  { name: 'UFC Live', group: 'Wrestling' },
+  { name: 'Bellator MMA', group: 'Wrestling' },
+  { name: 'ONE Championship', group: 'Wrestling' },
+  { name: 'Boxing Championship', group: 'Wrestling' },
+  { name: 'K-1 Kickboxing', group: 'Wrestling' },
+  { name: 'IRIB Combat Feed', group: 'Wrestling' },
+
+  // Extra nature / wildlife
+  { name: 'Nat Geo Wild HD', group: 'Nature' },
+  { name: 'Animal Planet HD', group: 'Nature' },
+  { name: 'Discovery Nature', group: 'Nature' },
+  { name: 'BBC Earth HD', group: 'Nature' },
+  { name: 'Wildlife Africa', group: 'Nature' },
+  { name: 'Ocean Documentary', group: 'Nature' },
+  { name: 'Safari Live', group: 'Nature' },
+  { name: 'Iran Nature Doc', group: 'Nature' },
+
+  // Extra Persian / IRIB style names for coverage
+  { name: 'IRIB TV1 HD', group: 'General' },
+  { name: 'IRIB TV2 HD', group: 'General' },
+  { name: 'IRIB TV3 HD', group: 'General' },
+  { name: 'IRIB Provincial Feed', group: 'General' },
+  { name: 'iFilm Persian', group: 'Movies' },
+  { name: 'iFilm Arabic', group: 'Movies' },
+  { name: 'Press TV', group: 'News' },
+  { name: 'Al Alam', group: 'News' },
+  { name: 'GEM Series', group: 'Series' },
+  { name: 'GEM Film HD', group: 'Movies' },
+  { name: 'Manoto Plus', group: 'Entertainment' },
+
+  // Adult / Sex folder (user-locked in app)
+  { name: 'Adult Channel 1', group: 'Sex' },
+  { name: 'Adult Channel 2', group: 'Sex' },
+  { name: 'Private Adult', group: 'Sex' },
+  { name: 'Erotic One', group: 'Sex' },
+  { name: 'Venus Adult', group: 'Sex' },
+  { name: 'Hustler TV', group: 'Sex' },
+  { name: 'Playboy TV', group: 'Sex' },
+  { name: 'Brazzers TV', group: 'Sex' },
+  { name: 'Redlight HD', group: 'Sex' },
+  { name: 'XXX Live 1', group: 'Sex' },
+
 ];
 
 export const SAMPLE_CHANNELS: Channel[] = SAMPLE_SEED.map((seed, index) => ({

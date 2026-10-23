@@ -25,6 +25,7 @@ export const GROUP_LABELS_FA: Record<string, string> = {
   Cooking: 'آشپزی و غذا',
   Lifestyle: 'سبک زندگی',
   Family: 'خانواده و فرزندپروری',
+  Sex: 'سکس و بزرگسال',
   Other: 'سایر',
 };
 
