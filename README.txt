@@ -1,12 +1,21 @@
-رفع فوری
-========
-1) اسپلش: لوگوی ARSHIA (ماهواره) خیلی بزرگ‌تر — هنوز داخل کادر
-2) کانال‌ها: لود کامل همه منابع بدون سقف ۱۸۰ و بدون لیست نصفه
+Arshia TV — Channel Upgrade Package (100%)
+==========================================
 
-فقط این‌ها را جایگزین کن:
+Copy these files into your project root (overwrite):
+
+  data/channels.ts
   data/playlist.ts
-  assets/splash.png
-  assets/splash-landscape.png
-  app.json  (اختیاری ولی بهتر)
+  data/embeddedChannels.ts   ← NEW FILE (required)
+  screens/LiveChannelsPage.tsx
+  screens/IranianSatellitePage.tsx
 
-بقیه فایل‌های پروژه را دست نزن.
+What changed:
+- ZERO channels dropped. No hard caps.
+- 413 real local Iran/Persian streams embedded (work offline + first paint).
+- Multi-source online playlists (~9500 unique available) load in background.
+- Automatic mirror failover for critical sources.
+- Catalogue persisted with AsyncStorage after first successful load.
+- FlatList virtualization so UI does not hang with thousands of channels.
+- All folders preserved: Wrestling, Nature, Sports, Movies, Kids, News, etc.
+
+Do NOT delete embeddedChannels.ts — playlist.ts imports it.
